@@ -27,8 +27,10 @@
 <meta property="og:description" content="Official V1 blog https:&#x2F;&#x2F;blog.vllm.ai&#x2F;2025&#x2F;01&#x2F;27&#x2F;v1-alpha-release.html Why V1? V0 is slow: CPU overhead is high V0 is hard to read and develop e.g., V0 scheduler is 2k LOC, V1 is 800 LOC V0 code decou">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-04-vLLM-v1-version/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-04-vLLM-v1-version/image1.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-04-vLLM-v1-version/image2.png">
 <meta property="article:published_time" content="2025-04-18T07:49:39.000Z">
-<meta property="article:modified_time" content="2026-01-19T18:16:01.884Z">
+<meta property="article:modified_time" content="2026-01-19T18:39:56.351Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="vLLM">
 <meta name="twitter:card" content="summary_large_image">
@@ -225,7 +227,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          441 words
+          438 words
         
       </span>
     
@@ -321,7 +323,7 @@
 <li>Stage1: dev V1</li>
 <li>Stage2: V0 &amp; V1 stay together</li>
 <li>Stage3: V1 on by default</li>
-<li>Stage4: V1 has more appealing features than V0 (WIP)</li>
+<li>Stage4: V1 has more appealing features than V0</li>
 <li>Stage5: remove V0 completely</li>
 </ul>
 <h3 id="Why-Pytorch-wins-Tensorflow"><a href="#Why-Pytorch-wins-Tensorflow" class="headerlink" title="Why Pytorch wins Tensorflow?"></a><strong>Why Pytorch wins Tensorflow?</strong></h3><ul>
@@ -403,21 +405,24 @@
 <li>much easier to read than V0 scheduler <code>vllm/core/scheduler.py</code></li>
 </ul>
 <h1 id="2-General-arch-separate-processes"><a href="#2-General-arch-separate-processes" class="headerlink" title="2. General arch: separate processes"></a>2. General arch: separate processes</h1><h2 id="2-1-b-w-API-scheduler-de-tokenizer"><a href="#2-1-b-w-API-scheduler-de-tokenizer" class="headerlink" title="2.1  b&#x2F;w API&#x2F;scheduler&#x2F;(de) tokenizer"></a>2.1  b&#x2F;w API&#x2F;scheduler&#x2F;(de) tokenizer</h2><p>EngineCore will not be slowed down by others</p>
+<p><img src="/img/vLLM-04-vLLM-v1-version/image1.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
 <p><strong>Lessons</strong></p>
 <ul>
 <li>Backend optimization is still important!</li>
-<li>However, backend guys don’t really know frontend logic.</li>
+<li>However, backend guys don’t really know frontend logic.<ul>
 <li>LLM guys need to tell backend guys what to optimize.</li>
 <li>Efficient communication is hard but critical.</li>
+</ul>
+</li>
 </ul>
 <h3 id="Open-discussion-microservice-for-LLM"><a href="#Open-discussion-microservice-for-LLM" class="headerlink" title="Open discussion: microservice for LLM?"></a><strong>Open discussion: microservice for LLM?</strong></h3><ul>
 <li><p>Microservice will increase communication for better scalability. However, communication regarding LLM inference involves tensors → large overhead</p>
 </li>
 <li><p>When scalability issue is really bad, microservice will be more popular.</p>
-</li>
-<li><p>Prediction: it will be popular in 2-3 years</p>
-</li>
-<li><p><strong>Time Machine Theory</strong>: an investment strategy that leverages time gaps between markets by replicating successful business models from advanced economies in emerging ones.</p>
+<ul>
+<li>Prediction: it will be popular in 2-3 years</li>
+<li><strong>Time Machine Theory</strong>: an investment strategy that leverages time gaps between markets by replicating successful business models from advanced economies in emerging ones.</li>
+</ul>
 </li>
 <li><p>P&#x2F;D disaggregation is a kind of microservice. P service + D service</p>
 </li>
@@ -437,20 +442,23 @@
 </ul>
 <h2 id="2-2-between-scheduler-worker-for-TP"><a href="#2-2-between-scheduler-worker-for-TP" class="headerlink" title="2.2  between scheduler&#x2F;worker for TP"></a>2.2  between scheduler&#x2F;worker for TP</h2><ul>
 <li><p><strong>V0</strong>: Scheduler &amp; Rank0 worker co-locate in the same process (previously in v0)</p>
-</li>
-<li><p>Process 0 will broadcast the input → large overhead</p>
+<ul>
+<li>Process 0 will broadcast the input → large overhead</li>
+</ul>
 </li>
 <li><p><strong>V1</strong>: Scheduler &amp; Worker in separate process.</p>
-</li>
-<li><p>Only broadcast the scheduling decision (a tiny object).</p>
-</li>
-<li><p>No input broadcast. Good for TP.</p>
+<ul>
+<li>Only broadcast the scheduling decision (a tiny object).</li>
+<li>No input broadcast. Good for TP.</li>
+</ul>
 </li>
 <li><p><strong>V1: strict SPMD</strong> (Single Program, Multiple Data) among workers</p>
-</li>
-<li><p>Necessary for RLHF</p>
+<ul>
+<li>Necessary for RLHF</li>
+</ul>
 </li>
 </ul>
+<p><img src="/img/vLLM-04-vLLM-v1-version/image2.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
 <h1 id="3-Worker"><a href="#3-Worker" class="headerlink" title="3. Worker"></a>3. Worker</h1><h2 id="3-1-Persistent-batching"><a href="#3-1-Persistent-batching" class="headerlink" title="3.1 Persistent batching"></a><strong>3.1 Persistent batching</strong></h2><ul>
 <li>We only send the <strong>delta between the GPU tensors</strong> of previous batch and the GPU tensors of this batch from CPU to GPU.</li>
 <li>We don’t construct all tensors from input requests each time</li>
@@ -492,12 +500,11 @@
 <li><p>Lets the GPU runner do <strong>incremental H2D transfers</strong></p>
 </li>
 <li><p>In each <strong><code>_prepare_inputs</code></strong> call, GPUModelRunner simply</p>
-</li>
-<li><p>a) re-indexes into the <em>same</em> pinned-CPU tensor (via <strong><code>torch.index_select</code></strong> on the flattened buffer) to gather “new” tokens for all requests</p>
-</li>
-<li><p>b) non-blocking-copies only those slices into the pre-allocated GPU input tensors</p>
-</li>
-<li><p>c) reuses the same block-table and sampling-metadata tensors on device</p>
+<ul>
+<li>a) re-indexes into the <em>same</em> pinned-CPU tensor (via <strong><code>torch.index_select</code></strong> on the flattened buffer) to gather “new” tokens for all requests</li>
+<li>b) non-blocking-copies only those slices into the pre-allocated GPU input tensors</li>
+<li>c) reuses the same block-table and sampling-metadata tensors on device</li>
+</ul>
 </li>
 </ul>
 <p>It is especially useful for <strong>long-running or streaming requests</strong> where only a <strong>small part of the input changes</strong> at each step.</p>
@@ -510,18 +517,17 @@
 <li><p><strong>Benefit</strong>: creates an abstraction to launch the whole sequence of kernels as one operator → significantly reduces CPU-GPU communication (each communication is close to 1 ms)</p>
 </li>
 <li><p><strong>Limitation</strong>: Does not record CPU operations, which reduces flexibility.</p>
-</li>
-<li><p>No dynamic tensors are allowed.</p>
-</li>
-<li><p>Tensor shapes must be static.</p>
-</li>
-<li><p>Index ops must be in GPU.</p>
-</li>
-<li><p>Hard to debug. For example, some ops are wrongly put on CPU (while you think they are on GPU) and will not be recorded.</p>
+<ul>
+<li>No dynamic tensors are allowed.</li>
+<li>Tensor shapes must be static.</li>
+<li>Index ops must be in GPU.</li>
+<li>Hard to debug. For example, some ops are wrongly put on CPU (while you think they are on GPU) and will not be recorded.</li>
+</ul>
 </li>
 <li><p><strong>Key observation</strong>: Flexibility is typically needed in attention layer, not MLP layer</p>
-</li>
-<li><p>For example, you may wanna switch to sparse attention, Mamba attention, RAGAttention, etc. and customize them</p>
+<ul>
+<li>For example, you may wanna switch to sparse attention, Mamba attention, RAGAttention, etc. and customize them</li>
+</ul>
 </li>
 <li><p><strong>Solution</strong>: Piece-wise CUDA Graph - only records CUDA graph for MLP layers while keeping attention in PyTorch eager mode</p>
 </li>
@@ -547,14 +553,14 @@
 <li><p>10 user chats: each chat with 100 tokens</p>
 </li>
 <li><p><strong>Normal attention</strong>: how many memory reads?</p>
+<ul>
+<li>(10k + 100) * 10 tokens</li>
+</ul>
 </li>
-<li><p>(10k + 100) * 10 tokens</p>
-</li>
-<li><p><strong>Cascade inference</strong>:</p>
-</li>
-<li><p>Common prefix is read only once</p>
-</li>
-<li><p>10k + 100 * 10 tokens</p>
+<li><p><strong>Cascade inference</strong>: Common prefix is read only once</p>
+<ul>
+<li>10k + 100 * 10 tokens</li>
+</ul>
 </li>
 <li><p>vLLM has a performance model to decide when to use cascade inference</p>
 </li>
@@ -564,10 +570,11 @@
 
 <h1 id="5-Multi-modality"><a href="#5-Multi-modality" class="headerlink" title="5. Multi-modality"></a>5. Multi-modality</h1><ul>
 <li>Embedding as the KV cache reference</li>
-<li>KV cache management (incoming)</li>
+<li>KV cache management (incoming)<ul>
 <li>Hybrid memory allocator</li>
 </ul>
-<p><em>To be discussed in later livestreams…</em></p>
+</li>
+</ul>
 <p>Source</p>
 <p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=6AcgEPmpHIc">https://www.youtube.com/watch?v=6AcgEPmpHIc</a></p>
 
