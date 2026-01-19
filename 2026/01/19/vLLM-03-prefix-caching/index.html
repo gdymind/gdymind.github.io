@@ -1,0 +1,706 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="KV-cache-aware routing in multi-host servinghttps:&#x2F;&#x2F;github.com&#x2F;vllm-project&#x2F;production-stack&#x2F;issues&#x2F;59 https:&#x2F;&#x2F;github.com&#x2F;kubernetes-sigs&#x2F;gateway-api-inference-extension&#x2F;issues&#x2F;498 Solution 1 Use stri">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vLLM 03 - prefix caching">
+<meta property="og:url" content="https://gdymind.github.io/2026/01/19/vLLM-03-prefix-caching/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="KV-cache-aware routing in multi-host servinghttps:&#x2F;&#x2F;github.com&#x2F;vllm-project&#x2F;production-stack&#x2F;issues&#x2F;59 https:&#x2F;&#x2F;github.com&#x2F;kubernetes-sigs&#x2F;gateway-api-inference-extension&#x2F;issues&#x2F;498 Solution 1 Use stri">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-01-19T08:39:25.000Z">
+<meta property="article:modified_time" content="2026-01-19T08:42:16.916Z">
+<meta property="article:author" content="gdymind">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>vLLM 03 - prefix caching - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="vLLM 03 - prefix caching"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-19 00:39" pubdate>
+          January 19, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          627 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">vLLM 03 - prefix caching</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="KV-cache-aware-routing-in-multi-host-serving"><a href="#KV-cache-aware-routing-in-multi-host-serving" class="headerlink" title="KV-cache-aware routing in multi-host serving"></a>KV-cache-aware routing in multi-host serving</h1><p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/production-stack/issues/59">https://github.com/vllm-project/production-stack/issues/59</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/gateway-api-inference-extension/issues/498">https://github.com/kubernetes-sigs/gateway-api-inference-extension/issues/498</a></p>
+<h2 id="Solution-1"><a href="#Solution-1" class="headerlink" title="Solution 1"></a>Solution 1</h2><ul>
+<li>Use string matching instead of token-ID-based matching<ul>
+<li>tokenization itself is pretty slow (it takes several microseconds) so running it for every request creates huge overhead.</li>
+</ul>
+</li>
+<li>implement the string server (e.g., using Redis) as the storage backend</li>
+</ul>
+<h2 id="Solution-2"><a href="#Solution-2" class="headerlink" title="Solution 2"></a>Solution 2</h2><ul>
+<li>Router can send a request to the kv cache management system: which server has the longest matched prefix?</li>
+<li>vLLM production stack team wants to use this solution: it decouples the logic</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://github.com/vllm-project/production-stack/issues/59">https://github.com/vllm-project/production-stack/issues/59</a></p>
+<p><strong>KV-cache-aware routing vs load balancing</strong>: Needs tradeoff. KV-cache-aware routing may route requests to the same node, which is bad for load balancing.</p>
+<h1 id="KV-cache-store-interface"><a href="#KV-cache-store-interface" class="headerlink" title="KV cache store interface"></a>KV cache store interface</h1><p>Back in 2023 when vLLM was not out, let’s take a look at Huggingface’s LLM interface:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">llm.inference(<br>    <span class="hljs-built_in">input</span>.tokens: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>], <span class="hljs-comment"># N tokens</span><br>    previous_kv_cache: <span class="hljs-built_in">list</span>[Tensor], <span class="hljs-comment"># M tokens&#x27; kv cache, where M &lt; N</span><br>) -&gt; output_tokens, new_kv_cache<br><br>output_tokens: <span class="hljs-comment"># N&#x27; new tokens</span><br>new_kv_cache: <span class="hljs-comment"># (N+N&#x27;) tokens&#x27; kv cache</span><br><br></code></pre></td></tr></table></figure>
+
+<p>Let’s not worry about PagedAttention or other complicated things in vLLM.</p>
+<p>How do you design a kv cache?</p>
+<p>KV cache design is essentially similar to traditional <strong>key-value store</strong> system design (such as in Redis, Object store, database, etc.)</p>
+<p>Our key-value pair in this context is:</p>
+<ul>
+<li>key: tokens</li>
+<li>value: KV cache tensors</li>
+</ul>
+<p>Then naturally, the interface should be like</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">KVCacheStore</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">store</span>(<span class="hljs-params">tokens, kv_cache_tensors</span>):<br>        <span class="hljs-keyword">pass</span><br>        <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">retrieve</span>(<span class="hljs-params">tokens</span>) -&gt; kv_cache_tensors<br>        <span class="hljs-keyword">pass</span><br><br></code></pre></td></tr></table></figure>
+
+<p>Traditional key-value store usually supports <strong>exact match</strong> (given the full key, return the value)</p>
+<p>KVCacheStore needs another query called <strong>prefix matching</strong> (actually, some traditional KV store also support this)</p>
+<h1 id="Prefix-matching"><a href="#Prefix-matching" class="headerlink" title="Prefix matching"></a>Prefix matching</h1><p>Tokens1: ABCD<strong>E</strong> → [KV1, KV2, KV3, KV4, <strong>KV5</strong>]</p>
+<p>Tokens2: ABCD<strong>F</strong> → [KV1 KV2, KV3, KV4, <strong>KV6</strong>]</p>
+<p><code>kv_cache_store.store(”ABCDE”, [KV1, KV2, KV3, KV4, **KV5**])</code></p>
+<p>When do <code>kv_cache_store.retrieve(”ABCDF”)</code>,</p>
+<p>we expect the matched prefix part <code>[KV1, KV2, KV3, KV4]</code> to be returned</p>
+<p>Trie is a good data structure that supports prefix matching.</p>
+<p>vLLM implements a simplified “hash of chunks” structure to simulate a Trie:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># given tokens</span><br><span class="hljs-string">&quot;ABCDEF&quot;</span><br><span class="hljs-comment"># assume chunk size = 2, chunking:</span><br><span class="hljs-string">&quot;AB&quot;</span>, <span class="hljs-string">&quot;CD&quot;</span>, <span class="hljs-string">&quot;EF&quot;</span><br><span class="hljs-comment"># chunk hashes:</span><br>h1 = <span class="hljs-built_in">hash</span>(<span class="hljs-string">&quot;AB&quot;</span>)<br>h2 = <span class="hljs-built_in">hash</span>(h1 + <span class="hljs-string">&quot;CD&quot;</span>)<br>h3 = <span class="hljs-built_in">hash</span>(h2 + <span class="hljs-string">&quot;EF&quot;</span>)<br><br></code></pre></td></tr></table></figure>
+
+<p>With prefix matching, store and retrieve become:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># store</span><br><span class="hljs-keyword">for</span> chunk_hash, chunk_kv <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(...)<br>    redis.put(chunk_hash, chunk_kv)<br>    <br>    <br><span class="hljs-comment"># retrieve</span><br><span class="hljs-keyword">for</span> chunk_hash <span class="hljs-keyword">in</span> ...:<br>    kv_chunk  = redis.get(chunk_hash)<br>    <span class="hljs-keyword">if</span> kv_chunk <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-keyword">break</span><br>    ...<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>Chunk size</strong>: tradeoff between matching granularity (hit rate) and management overhead</p>
+<ul>
+<li><p>inside serving engine:</p>
+<ul>
+<li>in vLLM, block size &#x3D; 16, so chunk size is also 16</li>
+<li>SGLang can support chunk size &#x3D; 1</li>
+</ul>
+</li>
+<li><p>outside serving engine (on disk):</p>
+<ul>
+<li>performance determined by # I&#x2F;O</li>
+<li>bad performance for small objects, so we need a large chunk size</li>
+</ul>
+</li>
+</ul>
+<h2 id="Semantic-caching"><a href="#Semantic-caching" class="headerlink" title="Semantic caching"></a><strong>Semantic caching</strong></h2><p><strong>How to deal with semantically similar prefix</strong>: When receiving a request, before sending it to LLM, do a vector similarity search for similar requests. If similar request exists, we can bypass LLM and return the previous response.</p>
+<h1 id="Eviction-policy"><a href="#Eviction-policy" class="headerlink" title="Eviction policy"></a>Eviction policy</h1><p>Which kv cache tensors to evict?</p>
+<p>Inside each request:</p>
+<ul>
+<li>“ABCDEF” → [“AB”, KV1], [”CD”, KV2], [”EF”, KV3]</li>
+<li>Evict from tail to head: KV3, KV2, KV1</li>
+</ul>
+<p>Among different requests: LRU, LFU, …</p>
+<h1 id="vLLM-implementation"><a href="#vLLM-implementation" class="headerlink" title="vLLM implementation"></a>vLLM implementation</h1><h2 id="Retrieve"><a href="#Retrieve" class="headerlink" title="Retrieve"></a>Retrieve</h2><p>pass in requests to the kv_cache_manager</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">computed_blocks, num_computed_tokens = \<br>   <span class="hljs-variable language_">self</span>.kv_cache_manager.get_computed_blocks(request)<br><br></code></pre></td></tr></table></figure>
+
+<p>get_computed_block() in V1</p>
+<ol>
+<li>chunking tokens to blocks of 16 tokens</li>
+<li>use <code>block_pool.get_cached_block</code> to get computed blocks</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_computed_blocks</span>(<span class="hljs-params"></span><br><span class="hljs-params">        self, request: Request</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">list</span>[KVCacheBlock], <span class="hljs-built_in">int</span>]:<br>    <span class="hljs-string">&quot;&quot;&quot;Get the computed (cached) blocks for the request.</span><br><span class="hljs-string">    Note that the computed blocks must be full.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        request: The request to get the computed blocks.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Returns:</span><br><span class="hljs-string">        A tuple containing:</span><br><span class="hljs-string">            - A list of blocks that are computed for the request.</span><br><span class="hljs-string">            - The number of computed tokens.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-variable language_">self</span>.enable_caching:<br>        <span class="hljs-comment"># Prefix caching is disabled.</span><br>        <span class="hljs-keyword">return</span> [], <span class="hljs-number">0</span><br><br>    <span class="hljs-comment"># The block hashes for the request may already be computed</span><br>    <span class="hljs-comment"># if the scheduler has tried to schedule the request before.</span><br>    block_hashes = <span class="hljs-variable language_">self</span>.req_to_block_hashes[request.request_id]<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> block_hashes:<br>        block_hashes = hash_request_tokens(<span class="hljs-variable language_">self</span>.block_size, request)<br>        <span class="hljs-variable language_">self</span>.req_to_block_hashes[request.request_id] = block_hashes<br><br>    <span class="hljs-variable language_">self</span>.prefix_cache_stats.requests += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">if</span> request.sampling_params.prompt_logprobs <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        <span class="hljs-comment"># Check for cache hits</span><br>        computed_blocks = []<br>        <span class="hljs-keyword">for</span> block_hash <span class="hljs-keyword">in</span> block_hashes:<br>            <span class="hljs-comment"># block_hashes is a chain of block hashes. If a block hash</span><br>            <span class="hljs-comment"># is not in the cached_block_hash_to_id, the following</span><br>            <span class="hljs-comment"># block hashes are not computed yet for sure.</span><br>            <span class="hljs-keyword">if</span> cached_block := <span class="hljs-variable language_">self</span>.block_pool.get_cached_block(<br>                    block_hash):<br>                computed_blocks.append(cached_block)<br>            <span class="hljs-keyword">else</span>:<br>                <span class="hljs-keyword">break</span><br><br>        <span class="hljs-variable language_">self</span>.prefix_cache_stats.queries += <span class="hljs-built_in">len</span>(block_hashes)<br>        <span class="hljs-variable language_">self</span>.prefix_cache_stats.hits += <span class="hljs-built_in">len</span>(computed_blocks)<br><br>        <span class="hljs-comment"># NOTE(woosuk): Since incomplete blocks are not eligible for</span><br>        <span class="hljs-comment"># sharing, `num_computed_tokens` is always a multiple of</span><br>        <span class="hljs-comment"># `block_size`.</span><br>        num_computed_tokens = <span class="hljs-built_in">len</span>(computed_blocks) * <span class="hljs-variable language_">self</span>.block_size<br>        <span class="hljs-keyword">return</span> computed_blocks, num_computed_tokens<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-comment"># Skip cache hits for prompt logprobs</span><br>        <span class="hljs-keyword">return</span> [], <span class="hljs-number">0</span><br><br><br></code></pre></td></tr></table></figure>
+
+<h2 id="Store"><a href="#Store" class="headerlink" title="Store"></a>Store</h2><p>Defined in <code>/vllm/v1/core/block_pool.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlockPool</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;BlockPool that manages KVCacheBlocks.</span><br><span class="hljs-string">    It provides methods to allocate, free and cache the kv cache blocks. The </span><br><span class="hljs-string">    free_block_queue stores the free blocks in eviction order to enable </span><br><span class="hljs-string">    allocation, free, and cache eviction. The cached_block_hash_to_block </span><br><span class="hljs-string">    maps between block hash and cached block to support finding cached blocks </span><br><span class="hljs-string">    by their block hash.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        num_gpu_blocks: The number of blocks in the pool.</span><br><span class="hljs-string">        enable_caching: Whether to enable prefix caching.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<p>The function is called <code>cache_full_blocks</code></p>
+<p>It caches a list of full blocks for prefix caching.</p>
+<p>This function takes a list of blocks that will have their block hash metadata to be updated and cached.</p>
+<p>Given a request, it computes the block hashes for the blocks starting from <code>num_cached_blocks</code> to <code>num_full_blocks</code>, updating the metadata for each block and caching them in the <code>cached_block_hash_to_block</code>.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">cache_full_blocks</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    request: Request,</span><br><span class="hljs-params">    blocks: <span class="hljs-built_in">list</span>[KVCacheBlock],</span><br><span class="hljs-params">    block_hashes: <span class="hljs-built_in">list</span>[BlockHashType],</span><br><span class="hljs-params">    num_cached_blocks: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    num_full_blocks: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    block_size: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;Cache a list of full blocks for prefix caching.</span><br><span class="hljs-string">    This function takes a list of blocks that will have their block hash</span><br><span class="hljs-string">    metadata to be updated and cached. Given a request, it computes the</span><br><span class="hljs-string">    block hashes for the blocks starting from `num_cached_blocks` to </span><br><span class="hljs-string">    `num_full_blocks`, updating the metadata for each block</span><br><span class="hljs-string">    and caching them in the `cached_block_hash_to_block`.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        request: The request to cache the blocks.</span><br><span class="hljs-string">        blocks: All blocks in the request.</span><br><span class="hljs-string">        block_hashes: Block hashes of the blocks in the request. Note that</span><br><span class="hljs-string">        this list may be shorter than the blocks list. In this case the </span><br><span class="hljs-string">        missed block hash will be computed in this function.</span><br><span class="hljs-string">        num_cached_blocks: The number of blocks that are already cached.</span><br><span class="hljs-string">        num_full_blocks: The number of blocks that are full and should </span><br><span class="hljs-string">            be cached after this function.</span><br><span class="hljs-string">        block_size: Number of tokens in each block.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> num_cached_blocks == num_full_blocks:<br>        <span class="hljs-keyword">return</span><br>    new_full_blocks = blocks[num_cached_blocks:num_full_blocks]<br>    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">len</span>(block_hashes) &gt;= num_cached_blocks<br>    new_block_hashes = block_hashes[num_cached_blocks:]<br><br>    <span class="hljs-comment"># Update the new blocks with the block hashes through the chain.</span><br>    <span class="hljs-keyword">if</span> num_cached_blocks == <span class="hljs-number">0</span>:<br>        prev_block_hash_value = <span class="hljs-literal">None</span><br>    <span class="hljs-keyword">else</span>:<br>        prev_block = blocks[num_cached_blocks - <span class="hljs-number">1</span>]<br>        <span class="hljs-keyword">assert</span> prev_block.block_hash <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span><br>        prev_block_hash_value = prev_block.block_hash.hash_value<br><br>    <span class="hljs-keyword">for</span> i, blk <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(new_full_blocks):<br>        <span class="hljs-keyword">assert</span> blk.block_hash <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span><br><br>        <span class="hljs-keyword">if</span> i &lt; <span class="hljs-built_in">len</span>(new_block_hashes):<br>            <span class="hljs-comment"># The block hash may already be computed in</span><br>            <span class="hljs-comment"># &quot;get_computed_blocks&quot; if the tokens are not generated by</span><br>            <span class="hljs-comment"># this request (either the prompt tokens or the previously</span><br>            <span class="hljs-comment"># generated tokens with preemption). In this case we simply</span><br>            <span class="hljs-comment"># reuse the block hash.</span><br>            block_hash = new_block_hashes[i]<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-comment"># Otherwise compute the block hash and cache it in the request</span><br>            <span class="hljs-comment"># in case it will be preempted in the future.</span><br>            blk_idx = num_cached_blocks + i<br>            start_token_idx = blk_idx * block_size<br>            end_token_idx = (blk_idx + <span class="hljs-number">1</span>) * block_size<br>            block_tokens = request.all_token_ids[<br>                start_token_idx:end_token_idx]<br>            <span class="hljs-keyword">assert</span> <span class="hljs-built_in">len</span>(block_tokens) == block_size, (<br>                <span class="hljs-string">f&quot;Expected <span class="hljs-subst">&#123;block_size&#125;</span> tokens, got &quot;</span><br>                <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;<span class="hljs-built_in">len</span>(block_tokens)&#125;</span> at <span class="hljs-subst">&#123;blk_idx&#125;</span>th block for request &quot;</span><br>                <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;request.request_id&#125;</span>(<span class="hljs-subst">&#123;request&#125;</span>)&quot;</span>)<br><br>            <span class="hljs-comment"># Generate extra keys for multi-modal inputs. Note that since</span><br>            <span class="hljs-comment"># we reach to this branch only when the block is completed with</span><br>            <span class="hljs-comment"># generated tokens, we only need to consider the last mm input.</span><br>            extra_keys, _ = generate_block_hash_extra_keys(<br>                request, start_token_idx, end_token_idx, -<span class="hljs-number">1</span>)<br><br>            <span class="hljs-comment"># Compute the hash of the current block.</span><br>            block_hash = hash_block_tokens(prev_block_hash_value,<br>                                           block_tokens, extra_keys)<br>            block_hashes.append(block_hash)<br><br>        <span class="hljs-comment"># Update and add the full block to the cache.</span><br>        blk.block_hash = block_hash<br>        <span class="hljs-variable language_">self</span>.cached_block_hash_to_block[block_hash][blk.block_id] = blk<br>        prev_block_hash_value = block_hash.hash_value<br><br></code></pre></td></tr></table></figure>
+
+<h2 id="Eviction"><a href="#Eviction" class="headerlink" title="Eviction"></a>Eviction</h2><p>still in <code>BlockPool</code></p>
+<p>If a block is cached in <code>cached_block_hash_to_block</code>, we reset its hash metadata and evict it from the cache.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_maybe_evict_cached_block</span>(<span class="hljs-params">self, block: KVCacheBlock</span>) -&gt; <span class="hljs-built_in">bool</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    If a block is cached in `cached_block_hash_to_block`, we reset its hash</span><br><span class="hljs-string">    metadata and evict it from the cache.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        block: The block to evict.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Returns:</span><br><span class="hljs-string">        True if the block is evicted, False otherwise.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    block_hash = block.block_hash<br>    <span class="hljs-keyword">if</span> block_hash <span class="hljs-keyword">and</span> block_hash <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.cached_block_hash_to_block:<br>        block.reset_hash()<br>        <span class="hljs-keyword">del</span> <span class="hljs-variable language_">self</span>.cached_block_hash_to_block[block_hash][block.block_id]<br><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(<span class="hljs-variable language_">self</span>.cached_block_hash_to_block[block_hash]) == <span class="hljs-number">0</span>:<br>            <span class="hljs-keyword">del</span> <span class="hljs-variable language_">self</span>.cached_block_hash_to_block[block_hash]<br><br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br><br><br></code></pre></td></tr></table></figure>
+
+<p>Evictor class <code>FreeKVCacheBlockQueue</code>: use a doubly linked list for LRU eviction</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">FreeKVCacheBlockQueue</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;This class organizes a list of KVCacheBlock objects to a doubly linked</span><br><span class="hljs-string">    list of free blocks. We implement this class instead of using Python</span><br><span class="hljs-string">    builtin deque to support removing a block in the middle of the queue</span><br><span class="hljs-string">    in O(1) time. To close the performance gap to the builtin deque which is</span><br><span class="hljs-string">    implemented in C++, this class does not allocate any Python objects when</span><br><span class="hljs-string">    manipulating the linked list. Instead, this class manipulates the </span><br><span class="hljs-string">    prev_free_block and next_free_block attributes of the given blocks.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    The queue is ordered by block ID in the beginning. When a block is allocated</span><br><span class="hljs-string">    and then freed, it will be appended back with the eviction order:</span><br><span class="hljs-string">    1. The least recently used block is at the front (LRU).</span><br><span class="hljs-string">    2. If two blocks have the same last accessed time (allocated by the</span><br><span class="hljs-string">       same sequence), the one with more hash tokens (the tail of a block</span><br><span class="hljs-string">       chain) is at the front.</span><br><span class="hljs-string">    Note that we maintain this order by reversing the block order when free</span><br><span class="hljs-string">    blocks of a request. This operation is outside of this class.</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<p>Source:</p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=mWvqA_BNtsU&list=PLJj_urhaf2_qxpg8A5-6xoMvMLBKQMTX1&index=18&t=1s">https://www.youtube.com/watch?v=mWvqA_BNtsU&amp;list&#x3D;PLJj_urhaf2_qxpg8A5-6xoMvMLBKQMTX1&amp;index&#x3D;18&amp;t&#x3D;1s</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>vLLM 03 - prefix caching</div>
+      <div>https://gdymind.github.io/2026/01/19/vLLM-03-prefix-caching/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>January 19, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/04/04/vLLM-02-speculative-decoding/" title="vLLM 02 - speculative decoding">
+                        <span class="hidden-mobile">vLLM 02 - speculative decoding</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
