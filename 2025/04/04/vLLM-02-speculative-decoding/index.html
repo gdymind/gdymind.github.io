@@ -1,0 +1,759 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Why Speculative Decoding (SD)? Decoding is memory-bound: loading KV cache and model takes a long time  memory-bound cases: big matrix * small matrix; vector * matrix → O(n^2)  compute-bound cases: lar">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vLLM 02 - speculative decoding">
+<meta property="og:url" content="https://gdymind.github.io/2025/04/04/vLLM-02-speculative-decoding/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="Why Speculative Decoding (SD)? Decoding is memory-bound: loading KV cache and model takes a long time  memory-bound cases: big matrix * small matrix; vector * matrix → O(n^2)  compute-bound cases: lar">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-04-04T07:23:55.000Z">
+<meta property="article:modified_time" content="2026-01-19T08:30:16.822Z">
+<meta property="article:author" content="gdymind">
+<meta property="article:tag" content="vLLM">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>vLLM 02 - speculative decoding - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="vLLM 02 - speculative decoding"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-04-04 00:23" pubdate>
+          April 4, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          273 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          3 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">vLLM 02 - speculative decoding</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Why-Speculative-Decoding-SD"><a href="#Why-Speculative-Decoding-SD" class="headerlink" title="Why Speculative Decoding (SD)?"></a>Why Speculative Decoding (SD)?</h1><ul>
+<li><p>Decoding is memory-bound: loading KV cache and model takes a long time</p>
+</li>
+<li><p>memory-bound cases: big matrix * small matrix; vector * matrix → O(n^2)</p>
+</li>
+<li><p>compute-bound cases: large matrix * matrix → O(n^3)</p>
+</li>
+<li><p>Find a way to <strong>increase compute</strong> while <strong>not</strong> significantly increasing GPU <strong>memory</strong> access</p>
+</li>
+<li><p><strong>Solution</strong>: Guess multiple tokens and verify</p>
+<ul>
+<li>Example: In terms of token generation per iteration:<ul>
+<li>Guess 3 tokens, acceptance rate 2&#x2F;3</li>
+<li>2 tokens of guessing are correct + LLM inference will generate a new token –&gt; 3 tokens</li>
+</ul>
+</li>
+<li>Iteration time<ul>
+<li>Computation: (1+3)x</li>
+<li>Memory:</li>
+<li>w&#x2F;o SD: Model parameters (8x2 GB) + KV caches (n * 100 KB)</li>
+<li>w&#x2F; SD: Model parameters (8x2 GB) + KV caches ((n+3) * 100 KB)</li>
+<li>Iteration time almost unchanged</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="How-to-guess-tokens"><a href="#How-to-guess-tokens" class="headerlink" title="How to guess tokens?"></a>How to guess tokens?</h1><h2 id="N-gram"><a href="#N-gram" class="headerlink" title="N-gram"></a>N-gram</h2><ul>
+<li>most-used algorithm in production; simple and effective</li>
+<li>N-grams essentially build a mapping like: if last 3 tokens are A, B, C, next 2 tokens are D, E</li>
+<li>Example with “To be or not to be, this is a question”:<ul>
+<li>[To be or] –&gt; [not to]</li>
+<li>[be or not] –&gt; [to be]</li>
+<li>…</li>
+<li>[that is] –&gt; [a question]</li>
+</ul>
+</li>
+</ul>
+<p>Build N-gram from request input, use this N-gram to guess tokens.</p>
+<ul>
+<li>Example:</li>
+</ul>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs applescript">The followings are Shakespeare&#x27;s <br>famous quotes:<br>.... <br>To be <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">to</span> be, this <span class="hljs-keyword">is</span> a <br>question<br>....<br>What <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> best <span class="hljs-literal">quote</span> <span class="hljs-keyword">for</span> <span class="hljs-keyword">my</span> life?<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>Assume that LLM already generated:</li>
+</ul>
+<figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs 1c"><span class="hljs-string">&quot;Sure! We recommend you</span><br>this quote<span class="hljs-punctuation">:</span> &#x27;To be or&#x27;<span class="hljs-string">&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>[To be or] –&gt; [not to]</li>
+<li>Guess: next two tokens are [not to]</li>
+<li>Verify: yes yes</li>
+</ul>
+<p>Bottleneck of SD: token-guessing algorithm</p>
+<h3 id="Tree-verification"><a href="#Tree-verification" class="headerlink" title="Tree verification"></a>Tree verification</h3><ul>
+<li>N-gram mapping can be one-to-many, because some phrases appear multiple times with different suffixes</li>
+<li>[To be or] –&gt; [not to], [sleep in], [go to]</li>
+<li>[To be or] guess multiple choices: [not to], [sleep in], [go to]</li>
+<li>We need an efficient kernel for tree verification</li>
+</ul>
+<h3 id="How-to-tell-if-the-verification-is-right-or-wrong"><a href="#How-to-tell-if-the-verification-is-right-or-wrong" class="headerlink" title="How to tell if the verification is right or wrong?"></a>How to tell if the verification is right or wrong?</h3><ul>
+<li>Deterministic sampling: bad case for SD, because only one correct answer and the acceptance rate may be low</li>
+<li>Random sampling: correct when guess probability &gt; threshold</li>
+</ul>
+<p>Example: guessed tokens are <strong>right</strong></p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs vim">Input: [To <span class="hljs-keyword">be</span> <span class="hljs-built_in">or</span>] (already-decoded <br>output) [not <span class="hljs-keyword">to</span>] (guessed tokens)<br>[To <span class="hljs-keyword">be</span> <span class="hljs-built_in">or</span> not <span class="hljs-keyword">to</span>]<br>[To -&gt; <span class="hljs-keyword">be</span>]<br>[<span class="hljs-keyword">be</span> -&gt; <span class="hljs-built_in">or</span>]<br>[<span class="hljs-built_in">or</span> -&gt; not] our guess <span class="hljs-string">&quot;not&quot;</span> <span class="hljs-keyword">is</span> correct<br>[not -&gt; <span class="hljs-keyword">to</span>] our guess <span class="hljs-string">&quot;to&quot;</span> <span class="hljs-keyword">is</span> correct<br>[<span class="hljs-keyword">to</span> -&gt; <span class="hljs-keyword">be</span>] <span class="hljs-keyword">be</span> <span class="hljs-keyword">is</span> the <span class="hljs-keyword">right</span> <span class="hljs-keyword">next</span> token<br><br></code></pre></td></tr></table></figure>
+
+<p>Example: guessed tokens are <strong>wrong</strong></p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-symbol">Input:</span> [To <span class="hljs-keyword">be </span><span class="hljs-keyword">or] </span>(already-decoded<br>output) [not <span class="hljs-keyword">be] </span>(guessed tokens)<br><span class="hljs-keyword">LLM: </span>[To <span class="hljs-keyword">be </span><span class="hljs-keyword">or </span>not <span class="hljs-keyword">be]</span><br><span class="hljs-keyword"></span>[To -&gt; <span class="hljs-keyword">be]</span><br><span class="hljs-keyword"></span>[<span class="hljs-keyword">be </span>-&gt; <span class="hljs-keyword">or]</span><br><span class="hljs-keyword"></span>[<span class="hljs-keyword">or </span>-&gt; not] our guess <span class="hljs-string">&quot;not&quot;</span> is <br>correct<br>[not -&gt; to] our guess <span class="hljs-string">&quot;be&quot;</span> is wrong, it <span class="hljs-keyword">should </span><span class="hljs-keyword">be </span><span class="hljs-string">&quot;to&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<h2 id="Model-based-draft-model"><a href="#Model-based-draft-model" class="headerlink" title="Model-based (draft model)"></a>Model-based (draft model)</h2><ul>
+<li><p>Parallel guessing: guesses next few tokens independently</p>
+<ul>
+<li>Fast but worse performance</li>
+</ul>
+</li>
+<li><p>Autoregressive guessing</p>
+</li>
+</ul>
+<h1 id="Why-deployment-production-is-so-hard"><a href="#Why-deployment-production-is-so-hard" class="headerlink" title="Why deployment&#x2F;production is so hard?"></a><strong>Why deployment&#x2F;production is so hard?</strong></h1><p>Acceptance rate is high enough (&gt; 75%)… so that’s not an issue</p>
+<p><strong>SD is beneficial or not?</strong></p>
+<ul>
+<li>Workload may already be compute-bound</li>
+<li>Batch size small: more memory-bound</li>
+<li>Batch size large: more compute-bound</li>
+<li>SD makes it move from memory-bound to compute-bound.</li>
+<li>In practice, the workload may already be compute-bound, and SD will make it worse</li>
+</ul>
+<p><strong>How many tokens should we guess?</strong> - It should be determined based on arithmetic intensity</p>
+<ul>
+<li>Arithmetic intensity: metric to measure whether it’s compute-bound or memory-bound.</li>
+<li>Arithmetic intensity &#x3D; FLOPS &#x2F; Bytes (or memory bandwidth)</li>
+<li>Every hardware has a suitable intensity</li>
+</ul>
+<p><strong>Other engineering issues</strong></p>
+<ul>
+<li><p>Small model needs KV cache. How can we allocate that?</p>
+<ul>
+<li>If put with vLLM, extra mem</li>
+<li>If not, not a single pool</li>
+</ul>
+</li>
+<li><p>Small model may need different parallel config. For example, model TP&#x3D;8, draft model may need TP&#x3D;2</p>
+<ul>
+<li>Assume small model is no TP, and is on GPU0 + vLLM forces same GPU utilization on different GPUs → memory waste on other GPU memory</li>
+</ul>
+</li>
+<li><p>Pre-allocate KV cache for guessed tokens.</p>
+<ul>
+<li>You break the system assumption that only one token is generated each time. You may need to change the whole vLLM interface</li>
+<li>What if pre-allocated tokens cross vLLM’s block boundary?</li>
+<li>Need to discard wrong tokens</li>
+</ul>
+</li>
+<li><p>Sampling → verification</p>
+</li>
+<li><p>Minimize overhead (ngram) for loop is slow</p>
+</li>
+<li><p>How many # of tokens should we guess</p>
+</li>
+<li><p>How to distinguish between requests</p>
+<ul>
+<li>Different requests: different # of tokens, part of them do not run spec decode</li>
+</ul>
+</li>
+</ul>
+<p><strong>Summary of challenges above:</strong></p>
+<ul>
+<li>When SD is beneficial, how to find the best configuration</li>
+<li>How to detect when SD is not beneficial? How to turn off SD in such cases?</li>
+</ul>
+<p>Paper reading:</p>
+<ul>
+<li>Optimizing Speculative Decoding for Serving Large Language Models Using Goodput</li>
+<li>LLM Inference Unveiled: Survey and Roofline Model Insights</li>
+</ul>
+<p>Source</p>
+<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=WF5xaQqtKUE&list=PLJj_urhaf2_qxpg8A5-6xoMvMLBKQMTX1&index=19">https://www.youtube.com/watch?v=WF5xaQqtKUE&amp;list=PLJj_urhaf2_qxpg8A5-6xoMvMLBKQMTX1&amp;index&#x3D;19</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/vLLM/" class="print-no-link">#vLLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>vLLM 02 - speculative decoding</div>
+      <div>https://gdymind.github.io/2025/04/04/vLLM-02-speculative-decoding/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>April 4, 2025</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/03/28/vllm-P-D-disaggregation/" title="vLLM 01 - P/D disaggregation">
+                        <span class="hidden-mobile">vLLM 01 - P/D disaggregation</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
