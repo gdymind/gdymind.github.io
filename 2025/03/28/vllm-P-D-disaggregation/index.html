@@ -19,15 +19,15 @@
   <meta name="author" content="gdymind">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Recap for Tensor parallelism (TP): all-gather ops  linear MN NK → MK matmul decompose to several MN’ N’K  → MK Element-wise sum all M*K matrices  Why P&#x2F;D disaggregation? Initial scheduler logic i">
+    <meta name="description" content="Why P&#x2F;D disaggregation? Initial scheduler logic in vLLM: prioritize prefill for good throughput Problem: prefill may slow down other requests’ decode  How to mix P and D together? Well, even thei">
 <meta property="og:type" content="article">
 <meta property="og:title" content="vLLM 01 - P&#x2F;D disaggregation">
 <meta property="og:url" content="https://gdymind.github.io/2025/03/28/vllm-P-D-disaggregation/index.html">
 <meta property="og:site_name" content="gdymind&#39;s Blog">
-<meta property="og:description" content="Recap for Tensor parallelism (TP): all-gather ops  linear MN NK → MK matmul decompose to several MN’ N’K  → MK Element-wise sum all M*K matrices  Why P&#x2F;D disaggregation? Initial scheduler logic i">
+<meta property="og:description" content="Why P&#x2F;D disaggregation? Initial scheduler logic in vLLM: prioritize prefill for good throughput Problem: prefill may slow down other requests’ decode  How to mix P and D together? Well, even thei">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-03-29T06:16:22.000Z">
-<meta property="article:modified_time" content="2026-01-19T07:58:41.236Z">
+<meta property="article:modified_time" content="2026-01-19T08:19:55.264Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="vLLM">
 <meta name="twitter:card" content="summary_large_image">
@@ -223,7 +223,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          330 words
+          321 words
         
       </span>
     
@@ -276,13 +276,7 @@
             
               <div class="markdown-body">
                 
-                <p><strong>Recap for Tensor parallelism (TP)</strong>: all-gather ops</p>
-<ul>
-<li>linear MN NK → MK matmul</li>
-<li>decompose to several MN’ N’<em>K  → M</em>K</li>
-<li>Element-wise sum all M*K matrices</li>
-</ul>
-<h2 id="Why-P-D-disaggregation"><a href="#Why-P-D-disaggregation" class="headerlink" title="Why P&#x2F;D disaggregation?"></a>Why P&#x2F;D disaggregation?</h2><ul>
+                <h2 id="Why-P-D-disaggregation"><a href="#Why-P-D-disaggregation" class="headerlink" title="Why P&#x2F;D disaggregation?"></a>Why P&#x2F;D disaggregation?</h2><ul>
 <li><strong>Initial scheduler logic in vLLM</strong>: prioritize prefill for good throughput</li>
 <li><strong>Problem</strong>: prefill may slow down other requests’ decode</li>
 </ul>

@@ -235,7 +235,7 @@
       
       <a class="index-excerpt index-excerpt__noimg" href="/2025/03/28/vllm-P-D-disaggregation/" target="_self">
         <div>
-          Recap for Tensor parallelism (TP): all-gather ops  linear MN NK → MK matmul decompose to several MN’ N’K  → MK Element-wise sum all M*K matrices  Why P&#x2F;D disaggregation? Initial scheduler logic i
+          Why P&#x2F;D disaggregation? Initial scheduler logic in vLLM: prioritize prefill for good throughput Problem: prefill may slow down other requests’ decode  How to mix P and D together? Well, even thei
         </div>
       </a>
 
