@@ -43,7 +43,7 @@
 <meta property="og:image" content="https://gdymind.github.io/img/Perplexity-DeepSeek-MoE/image%2014.png">
 <meta property="og:image" content="https://gdymind.github.io/img/Perplexity-DeepSeek-MoE/image%2015.png">
 <meta property="article:published_time" content="2025-05-17T03:48:53.000Z">
-<meta property="article:modified_time" content="2026-01-20T05:21:01.964Z">
+<meta property="article:modified_time" content="2026-01-20T06:32:50.686Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="MoE">
 <meta name="twitter:card" content="summary_large_image">
@@ -246,7 +246,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          561 words
+          560 words
         
       </span>
     
@@ -412,7 +412,7 @@
 <ul>
 <li><strong>x-axis</strong>: user perceived generating <strong>decoding</strong> speed (tok&#x2F;s)</li>
 <li><strong>y-axis</strong>: <strong>PER NODE</strong> throughput (tok&#x2F;s) in log scale → can be converted to cost ($ per million toks)</li>
-<li><strong>setups</strong>: nodes &#x3D; 1, 2, 4, 6, 8, 16 (i.e., EP&#x3D;8, 16, 32, 64, 128); TP &#x3D; 1, 2, 4, 8; batch size &#x3D; 1, 2, 4, 8, 16, 32, 64, 128</li>
+<li><strong>setups</strong>: nodes &#x3D; 1, 2, 4, 8, 16 (i.e., EP&#x3D;8, 16, 32, 64, 128); TP &#x3D; 1, 2, 4, 8; batch size &#x3D; 1, 2, 4, 8, 16, 32, 64, 128</li>
 <li>one data points ↔ one specific setup combination</li>
 </ul>
 <h2 id="pareto-frontiers"><a href="#pareto-frontiers" class="headerlink" title="pareto frontiers"></a><strong>pareto frontiers</strong></h2><p>points on the line: <strong>pareto frontiers</strong> for each EP setup</p>
@@ -570,9 +570,7 @@
 </ul>
 </li>
 <li>Deepseek R1 w&#x2F; quantization can be deployed on a single 8xH100 node</li>
-<li>Q: what are GroupGEMM’s dimensions [# <em><strong>activated</strong></em> Es on the GPU, # requests on the GPU]?</li>
-</ol>
-<ul>
+<li>Q: what are GroupGEMM’s dimensions [# <em><strong>activated</strong></em> Es on the GPU, # requests on the GPU]?<ul>
 <li>It should be [# Es on this GPU, 8*n&#x2F;256] (ideal case where Es are tokens are evenly distributed)</li>
 <li>8*n&#x2F;256 is the average # tokens per E<ul>
 <li>n is the batch size</li>
@@ -581,10 +579,8 @@
 </ul>
 </li>
 </ul>
-<ol>
-<li>Are decoding optimizations more algorithm-wise or system-wise?</li>
-</ol>
-<ul>
+</li>
+<li>Are decoding optimizations more algorithm-wise or system-wise?<ul>
 <li>spec decoding is both (but more algorithm-wise)</li>
 <li>quantization is more algorithm-wise, with some system insight<ul>
 <li>GPU may optimize for specialized format</li>
@@ -593,7 +589,7 @@
 </ul>
 </li>
 </ul>
-<ol>
+</li>
 <li>What is the kv cache hit rate in production?<ul>
 <li>Check out character.ai’s blogs<ul>
 <li><a target="_blank" rel="noopener" href="https://research.character.ai/optimizing-inference/?ref=blog.character.ai">https://research.character.ai/optimizing-inference/?ref=blog.character.ai</a></li>
@@ -693,6 +689,34 @@
             </div>
 
             
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2025/05/16/Perplexity-DeepSeek-MoE/';
+          this.page.identifier = '/2025/05/16/Perplexity-DeepSeek-MoE/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
           </article>
         </div>
       </div>
