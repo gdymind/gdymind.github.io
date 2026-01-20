@@ -4,6 +4,27 @@
   
   
   <entry>
+    <title>vLLM 05 - vLLM multi-modal support</title>
+    <link href="/2025/06/06/vLLM-multi-modal/"/>
+    <url>/2025/06/06/vLLM-multi-modal/</url>
+    
+    <content type="html"><![CDATA[<p><strong>Speaker</strong>: Roger Wang</p><h1 id="1-Overview-large-multi-modal-models-LMMs"><a href="#1-Overview-large-multi-modal-models-LMMs" class="headerlink" title="1. Overview large multi-modal models (LMMs)"></a>1. Overview large multi-modal models (LMMs)</h1><ul><li>most SOTA Large Multimodal Models leverage a <strong>language model</strong> backbone with an <strong>encoder</strong> for a non-text modality. E.g., LLaVA, Qwen VL, Qwen2 VL, Qwen 2.5 VL, Kimi VL</li><li><strong>Visual encoders</strong>: img → visual embeddings</li><li><strong>Goal of vLLM</strong>: add these encoder supports<ul><li>input:  visual embeddings concatenate with text embeddings</li><li>output: text only. No plans for multi-modal outputs in vLLM (but can be in vLLM-project ecosystem) yet<ul><li>reason: architectures for open-source multi-modal-output models are not mature or unified yet</li></ul></li></ul></li></ul><p><img src="/img/vLLM-05-multi-modal/image.png" alt="image.png"></p><h1 id="2-Multi-modal-LLM-inference"><a href="#2-Multi-modal-LLM-inference" class="headerlink" title="2. Multi-modal LLM inference"></a>2. Multi-modal LLM inference</h1><ul><li><strong>User text prompt</strong>: “What’s in this image? <image>“ &amp; <strong>User image</strong>: cute_cat.jpeg</li><li>-&gt; <strong>Tokenized text prompt</strong>: [1, 10, 38, 52, 107, 48, 2, 32000]<ul><li>32000 in this example is the image placeholder’s token id, which is fixed for a specific model</li><li><strong>Image data</strong>: PIL.Image.Image -&gt; image processor -&gt; image features (torch tensors)<ul><li>image features are encoder’s inputs</li></ul></li></ul></li><li>-&gt; <strong>Expanded text token ids</strong>: [1, 10, 38, 52, 107, 48, 2, 32000, 32000, 32000, …, 32000, 32000]<ul><li>the image token id is repeated for several times.<ul><li>e.g., 32000 will be repeated 576 times in LLaVA 1.5, because LLaVA 1.5’s image embeddings are normalized to a fixed resolution and generate a fixed number (576) of embeddings</li><li>more recent models will do dynamic cutting and padding to convert images to patches, and generate one embedding for each patch. in this case, the repetition count is dynamic</li><li>Q: how do you know the number of repeating times in advance?<ul><li>for a specific model, it’s typically based on the image resolution, and you can pre-compute it.</li></ul></li><li>this process is input preprocessing on <em>CPU</em>, so the dynamic length doesn’t matter. when it’s on <em>GPU</em> later, the length is already determined</li></ul></li><li><strong>Processed image features</strong>: torch.Tensor -&gt; vision encoder (usually ViT) -&gt; image embeddings</li></ul></li><li>-&gt; <strong>Text embeddings</strong> of shape 583 x 4096 (hidden size of the language model)<ul><li><strong>Image embeddings</strong> 576 x 1024 (hidden size of vision encoder) -&gt; Projector&#x2F;MLP -&gt; 576x4096<ul><li>Projector: align hidden size between text and image embeddings</li></ul></li></ul></li><li>-&gt; Merge the two embeddings by replacing where 32000 is with image embeddings</li><li>-&gt; Language model (identical as text-only inference)<ul><li>later inference is exactly the same as text-only inference</li></ul></li></ul><h1 id="3-v0-vs-v1-for-multi-modal"><a href="#3-v0-vs-v1-for-multi-modal" class="headerlink" title="3. v0 vs v1 for multi-modal"></a>3. v0 vs v1 for multi-modal</h1><p>In vLLM V0, multimodality support was designed <strong>without</strong>…</p><ol><li><strong>Chunked prefill</strong>: we assumed requests will always be fully prefilled</li><li><strong>Prefix caching</strong>: V0 prefix caching was designed exclusively based on token IDs</li><li><strong>Efficient input processing</strong>: we assumed multimodal input processing has little CPU overhead</li></ol><h2 id="3-1-Chunked-prefill"><a href="#3-1-Chunked-prefill" class="headerlink" title="3.1 Chunked prefill"></a>3.1 Chunked prefill</h2><ul><li>Chunked prefill: Prompts can be <em>partially</em> prefilled in a step to balance between prefill &amp; decode workloads</li></ul><p><img src="/img/vLLM-05-multi-modal/image%201.png" alt="image.png"></p><p><strong>Problem</strong></p><ul><li>Text-only prefill assumes a <strong>discrete</strong>, <strong>causal</strong> nature of embeddings (1 token -&gt; 1 embedding)<ul><li>causal: previous tokens do not depend on later tokens. as a result, we can do prefill one-by-one</li></ul></li><li>Multimodal embeddings are typically <strong>continuous</strong> features and <strong>generation</strong> <strong>cannot be broken up</strong> because of encoder <strong>full-attention</strong></li><li>LMM in V0 <strong>assumes full prefilling</strong>, thus multimodal embeddings need to be fully merged with text embeddings once generated</li></ul><p>How to do chunked prefill with LMMs?</p><p><strong>One possible solution (what we could have done in V0):</strong></p><ol><li>Track multimodal embedding positions in the input sequence</li><li>Re-generate multimodal embeddings whenever needed</li><li>Merge the required portion into input sequence chunk</li></ol><ul><li><strong>Problem:</strong> Repetitive multimodal encoder execution. Example<ul><li>a 64-frame video of 448×448 resolution -&gt; 16384 embeddings</li><li>if token budget &#x3D; 2048 -&gt; 9 times of encoder execution for prefilling!</li></ul></li></ul><h3 id="V1-Encoder-cache-encoder-aware-scheduler"><a href="#V1-Encoder-cache-encoder-aware-scheduler" class="headerlink" title="V1: Encoder cache &amp; encoder-aware scheduler"></a>V1: Encoder cache &amp; encoder-aware scheduler</h3><p><img src="/img/vLLM-05-multi-modal/image%202.png" alt="image.png"></p><ul><li>track multimodal embedding positions</li><li>schedule requests based on both <em>encoder</em> &amp; decoder budget<ul><li>you don’t want encoder to block the decoder as well</li></ul></li><li>multimodal embeddings are generated from encoder execution and added to encoder cache (on GPU!)</li><li>retrieve from cache to merge with text embeddings to be sent to decoder LM<ul><li>keep the embedding if still needed for later chunks</li><li>evict otherwise<ul><li>e.g., all embeddings for a specific image are fully prefilled</li></ul></li></ul></li></ul><p>Encoder cache can be extended to support embedding caching <strong>across</strong> requests! (not implemented yet)</p><ul><li>for example, 5 requests sharing the same image</li></ul><p><strong>QA</strong></p><ul><li>Q: does vLLM support KV cache for image embeddings?<ul><li>A: after the preprocessing above, image embeddings can be considered to be normal tokens and you can keep their KV cache</li><li>the encoder cache we mentioned before is embedding cache, not the KV cache in the later stage</li></ul></li><li>Q: how can you do chunked prefill for full attention?<ul><li>A: we cannot do chunking in the encoder (due to the full attention). We run encoder once for the full image, and cache it. Then the decoder part (LLM) can fetch chunks from the encoder</li></ul></li><li>Q: so do images use causal attention in the decoder (LLM)?<ul><li>yes for most SOTA models</li><li>some models do full attention for the image part. e.g., gemma3<ul><li>you cannot do chunked prefill for such models</li></ul></li></ul></li><li>Q: what’s the relationship between images’ resolution and the sequence length?<ul><li>A: in general, higher resolution leads to longer sequence length</li><li>but the concrete relationship is determined by models<ul><li>e.g., the earliest LLaVA resizes all images to the same resolution, while QWEN2 VL partitions images to patches</li></ul></li></ul></li><li>Q: what if the step token budget is too small to prefill a full image?<ul><li>A: that’s why we need to support chunked prefill</li></ul></li><li>Q: any work to use causal attention in the <em>encoder</em>?<ul><li>Qwen omni paper: they tried to do sth similar to causal attention for audio (or maybe video) processing<ul><li>these data needs to be streamed-in, because you don’t want to start processing after the full audio data is available</li><li>it’s not the mainstream now</li></ul></li></ul></li></ul><h2 id="3-2-Prefix-caching"><a href="#3-2-Prefix-caching" class="headerlink" title="3.2 Prefix caching"></a>3.2 Prefix caching</h2><p>some <em>engineering</em> optimization</p><p>In V0, prefix caching is exclusively based on hashing tuples of token IDs</p><p>Problem:</p><ul><li>multimodal placeholder token and token ID (e.g., “”: 32000) for multimodal embeddings are always the same across requests!</li><li>correctness issue if two requests have identical prompts but different images! (e.g., “ Describe the image.”)</li><li>prefix caching is <em>always turned off</em> for multimodal models in V0</li></ul><h3 id="V1-prefix-caching-with-metadata"><a href="#V1-prefix-caching-with-metadata" class="headerlink" title="V1: prefix caching with metadata"></a>V1: prefix caching with metadata</h3><p>In V1, prefix caching is redesigned to allow additional metadata about the current block of tokens, so we can now add <strong>identifier (image hash, uuid, etc) of multimodal data</strong> too!</p><p><img src="/img/vLLM-05-multi-modal/1be0483f-de49-488e-8162-881bc338daf2.png" alt="image.png"></p><p><a href="https://docs.vllm.ai/en/stable/design/v1/prefix_caching.html">https://docs.vllm.ai/en/stable/design/v1/prefix_caching.html</a></p><p>There can be much research on caching optimization. For example, image frames of the video have similarities. Right now the multi-modal support is not mature yet.</p><h2 id="3-3-Efficient-input-processing"><a href="#3-3-Efficient-input-processing" class="headerlink" title="3.3 Efficient input processing"></a>3.3 Efficient input processing</h2><p>some <em>engineering</em> optimization</p><p>Input processing can be very expensive (sometimes longer than encoder execution)</p><h3 id="Optimized-engine-loop"><a href="#Optimized-engine-loop" class="headerlink" title="Optimized engine loop"></a>Optimized engine loop</h3><p>Image pre-processing (PIL.Image.Image → torch tensors) actually leads to large CPU overhead</p><p>V0 assumed the overhead was small, but it turned out not</p><p>V1: pre-processing and the inference engine core are in different processes </p><p><img src="/img/vLLM-05-multi-modal/image%203.png" alt="image.png"></p><h3 id="Multi-modal-feature-caching"><a href="#Multi-modal-feature-caching" class="headerlink" title="Multi-modal feature caching"></a>Multi-modal feature caching</h3><ul><li>typically we have plenty of CPU memory available, so it can be utilized to cache the generated features from raw data format</li><li>reuse same identifier for prefix caching</li><li>mirrored caches in two processes (AsyncLLM and LLMEngineCore0) for less data transfer<ul><li>next step: use shared memory that both processes can access</li></ul></li></ul><p><img src="/img/vLLM-05-multi-modal/cc2b38fe-ac5b-44ae-b502-7e1cd6a2a3ff.png" alt="image.png"></p><ul><li>for multi-turn conversations or few-shot learning, we don’t have to re-generate features</li></ul><h1 id="4-Benchmark"><a href="#4-Benchmark" class="headerlink" title="4. Benchmark"></a>4. Benchmark</h1><h2 id="Online-serving"><a href="#Online-serving" class="headerlink" title="Online serving"></a>Online serving</h2><p>Results on previous alpha v1 releases</p><p><img src="/img/vLLM-05-multi-modal/image%204.png" alt="image.png"></p><ul><li>workload: single image + single text question</li><li>when qps is low, not much room for optimization</li></ul><h2 id="Offline-inference"><a href="#Offline-inference" class="headerlink" title="Offline inference"></a>Offline inference</h2><p><img src="/img/vLLM-05-multi-modal/image%205.png" alt="image.png"></p><ul><li>v1 no caching: benefits from splitting processes</li><li>0% repeat: all images and text are unique<ul><li>v1 + feature caching + prefix caching: worse than no caching due to the extra caching overhead but they were not reused</li></ul></li><li>50% repeat: 50% of all data are repeated</li></ul><h1 id="5-Future-work"><a href="#5-Future-work" class="headerlink" title="5. Future work"></a>5. Future work</h1><ul><li>right now one AsyncLLM works for one EngineCore. Change to <strong>many-to-many mapping</strong><ul><li>we can use more processes for image pre-processing</li></ul></li><li><strong>Non-huggingface&#x2F;third-party processor plugin</strong><ul><li>currently using huggingface to process</li><li>the reason vLLM decided to use huggingface because they didn’t want developers to implement new model supports twice (on huggingface and on vLLM)</li><li>but it turned out huggingface was too slow, and developers want to add their own processors</li></ul></li><li><strong>streaming inputs support</strong><ul><li>e.g., process image frames on the fly for a video</li><li>why not supported at this point<ul><li>currently the scheduler is not stateful. it cannot receive a signal like “more frames will be streamed for the current video”</li><li>not very popular in the community: although Qwen 2.5 VL supports video understanding, most ppl use it for image understanding. needs a good video understanding model</li></ul></li></ul></li><li><strong>Blended mixed modalities</strong><ul><li>previously, data in different modalities are concatenated</li><li>“audio in video” in Qwen2.5-Omni: audio and video embeddings are mixed together<ul><li>e.g., if we have 12 audio embeddings and 15 video embeddings. we can place them as 4 audio embeddings + 5 video embeddings + 4 audio embeddings + …</li></ul></li></ul></li><li><strong>Multi-modal output: not likely in vllm-project&#x2F;vllm</strong></li></ul><p><strong>Any contribution&#x2F;discussion is welcomed!</strong></p><ul><li>Slack channel #sig-multi-modality</li><li>vllm-project -&gt; Projects -&gt; Multi-modality Core</li><li>Current core contributors:<ul><li>Roger Wang @ywang96</li><li>Cyrus Leung @DarkLight1337</li></ul></li></ul><p>Source: </p><p><a href="https://www.youtube.com/watch?v=rp2QMfhex4A">https://www.youtube.com/watch?v=rp2QMfhex4A</a></p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>vLLM</tag>
+      
+      <tag>LLM inference</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Perplexity DeepSeek MoE</title>
     <link href="/2025/05/16/Perplexity-DeepSeek-MoE/"/>
     <url>/2025/05/16/Perplexity-DeepSeek-MoE/</url>
@@ -15,6 +36,8 @@
     <tags>
       
       <tag>MoE</tag>
+      
+      <tag>LLM inference</tag>
       
     </tags>
     
@@ -35,6 +58,8 @@
       
       <tag>MoE</tag>
       
+      <tag>LLM inference</tag>
+      
     </tags>
     
   </entry>
@@ -53,6 +78,8 @@
     <tags>
       
       <tag>vLLM</tag>
+      
+      <tag>LLM inference</tag>
       
     </tags>
     
@@ -73,6 +100,8 @@
       
       <tag>vLLM</tag>
       
+      <tag>LLM inference</tag>
+      
     </tags>
     
   </entry>
@@ -92,6 +121,8 @@
       
       <tag>vLLM</tag>
       
+      <tag>LLM inference</tag>
+      
     </tags>
     
   </entry>
@@ -110,6 +141,8 @@
     <tags>
       
       <tag>vLLM</tag>
+      
+      <tag>LLM inference</tag>
       
     </tags>
     
