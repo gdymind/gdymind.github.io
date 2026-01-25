@@ -1,0 +1,988 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. OverallMany inference talks, but more RL talks. RL RL101 3 RL challenges: training collapses, training slow, hardware errors New frameworks &#x2F; API: Tinker, SkyRL, Slime, SGLang’s Slime-based fr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pytorch Conference &amp; Ray Summit 2025 summary">
+<meta property="og:url" content="https://gdymind.github.io/2025/11/11/Pytorch-Conference-Ray-Summit-2025-summary/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="1. OverallMany inference talks, but more RL talks. RL RL101 3 RL challenges: training collapses, training slow, hardware errors New frameworks &#x2F; API: Tinker, SkyRL, Slime, SGLang’s Slime-based fr">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/c55b736f-5411-4c73-826e-dffa01bdc9a3.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/b30fedf5-bc35-4e0e-bf4d-0debde7183af.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/2e6a1b32-b929-4a22-a262-d277d6857c17.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/50f5cdde-f61b-496e-bd0b-3920a2bdb94f.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/b0921f33-260d-447f-b1c6-80a721902825.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/image%201.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/c879b174-56fb-4cd2-98c6-5dc0a8c76320.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/ed0d71b5-da14-4241-b05e-3ceebd6d6338.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/image%202.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/ad209a4d-57aa-4463-bf4c-d5ed83711381.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/aa2b78bd-c5a3-4898-9c8f-b879ddde43ce.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/357aeb2e-8bf0-4595-aff9-6a451436a8ec.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/9fc53ccd-d5a1-4c25-a507-e124041fff7f.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/94da26dc-b179-4d23-bf02-9a8604cb8953.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/3a00903b-4b02-486b-8c75-abea6397f839.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/e0b83dda-6306-49c7-a1df-cb40a04a280b.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/6551656a-ff69-4f37-8bc7-de56199df30a.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/image%203.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/image%204.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/ffb6360b-e21a-4bb5-8a8d-bc0500d9a1ce.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/9d1a0f5f-674b-4600-addd-cbc7ab1e9720.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/c98144b1-3bee-4afc-96e6-bf3f4bc148f3.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/4D033E71-D8B0-4E95-BB4E-0C6526A5E063_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/56cf3517-6439-4d50-9e50-ef8713c20e56.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/10b7b1f1-ed23-4075-bf06-19a66ba22479.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/4bf74bc5-9229-42eb-a4db-210e1fe7c690.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/fca31ca4-b2fe-413f-8131-f2b4e1d18412.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/8f1f0355-0e74-46ae-9f8f-67adc15b2ffc.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/522d9ddd-043f-4608-bc77-feb9b57f6180.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/1D3D93CF-35C0-4D56-A8A6-451D508FEAC2_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/B89D1E80-72C1-4182-8230-9C99424C487E_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/4EE8040E-92BE-411F-BA0B-DE135C30DEDF_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/7CED5062-BA37-4875-B7F8-073BED613A60_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/79879abe-8856-40ca-b368-00ace7c5e6c3.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/7997b4f4-5b32-475d-bafa-0ea36446fcda.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/9879f448-7b25-45fa-918c-6e203db4e7e8.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/2962bf36-5554-4d4d-8b8f-f4f5c5a00b2d.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/4dc6d67b-0edc-41ce-8cd3-108dcc4fc319.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/ee6ca06b-038b-4838-a951-cd939d41e4df.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/d1d48dbe-ce13-433d-855a-d79f3107e3d9.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/c7eeb4be-48e6-4e5c-be17-700cba9c2160.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/959ae577-94b4-460f-bdd3-f08c49d763c5.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/09e729e5-f99b-4a04-bd8d-586a5ff1f10d.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/9648db16-af2b-4fb3-88ee-ad294663b180.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/3cd9e47d-1078-44b5-b640-e1535cbb109e.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/526dc90c-3aa9-4e82-904d-98d9fef4d30d.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/65a8719e-e0b7-4ab6-8e7e-2a97f566bc25.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/62af6237-bcb8-42bf-8c3f-01653c62f0ea.png">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/BFA6CE5C-1DF2-45DE-BD64-822F46666B80_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/94841852-1161-4FB0-9DB2-1E882C874733_1_105_c.jpeg">
+<meta property="og:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/7F715401-F860-4F5F-A511-FB05BA693256_1_105_c.jpeg">
+<meta property="article:published_time" content="2025-11-12T01:34:04.000Z">
+<meta property="article:modified_time" content="2026-01-25T01:41:10.297Z">
+<meta property="article:author" content="gdymind">
+<meta property="article:tag" content="RL">
+<meta property="article:tag" content="LLM inference">
+<meta property="article:tag" content="meetup">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://gdymind.github.io/img/PyTorch_Conf_Ray_summit_2025/c55b736f-5411-4c73-826e-dffa01bdc9a3.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Pytorch Conference &amp; Ray Summit 2025 summary - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Pytorch Conference &amp; Ray Summit 2025 summary"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-11-11 17:34" pubdate>
+          November 11, 2025 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          286 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          3 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Pytorch Conference &amp; Ray Summit 2025 summary</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-Overall"><a href="#1-Overall" class="headerlink" title="1. Overall"></a>1. Overall</h1><p>Many inference talks, but more RL talks.</p>
+<h2 id="RL"><a href="#RL" class="headerlink" title="RL"></a>RL</h2><ul>
+<li>RL101</li>
+<li>3 RL challenges: training collapses, training slow, hardware errors</li>
+<li>New frameworks &#x2F; API: Tinker, SkyRL, Slime, SGLang’s Slime-based framework<ul>
+<li>and the old framework VeRL: MPMD vs SPMD; RL pipeline</li>
+</ul>
+</li>
+<li>Cursor RL, Kimi K2 thinking RL</li>
+<li>Specialized models<ul>
+<li>One base model + multiple fine-tuned models (e.g., tool use models)</li>
+<li>GPT5 smart router</li>
+<li>vLLM semantic router</li>
+</ul>
+</li>
+</ul>
+<h2 id="Inference"><a href="#Inference" class="headerlink" title="Inference"></a>Inference</h2><ul>
+<li>Elastic EP</li>
+<li>AIbrix: Prefix-aware routing, load-aware routing; router vs engine KV indexing</li>
+<li>Spotify with vLLM on TPU</li>
+<li>MoE: dp, tp, pp, sq, token-parallel, cp</li>
+<li>Checkpoint hot-swap</li>
+</ul>
+<h2 id="Pytorch-update"><a href="#Pytorch-update" class="headerlink" title="Pytorch update"></a>Pytorch update</h2><ul>
+<li>edge device, RL, distributed engine, kernel DSL, communication, simple FSDP</li>
+</ul>
+<h1 id="2-RL"><a href="#2-RL" class="headerlink" title="2. RL"></a>2. RL</h1><h2 id="2-1-RL-101"><a href="#2-1-RL-101" class="headerlink" title="2.1 RL 101"></a>2.1 RL 101</h2><p><strong>Agentic RL:</strong> Policy LLM → rollout → reward → advantage → policy update</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/c55b736f-5411-4c73-826e-dffa01bdc9a3.png" srcset="/img/loading.gif" lazyload alt="7C550A78-E6A5-4149-8C83-AC02D5578629_1_105_c.jpeg"></p>
+<h2 id="2-2-RL-challenges"><a href="#2-2-RL-challenges" class="headerlink" title="2.2 RL challenges"></a>2.2 RL challenges</h2><ol>
+<li><strong>Training collapses</strong><ol>
+<li>training-rollout mismatch<ol>
+<li>solution: importance sampling, swithcing from BF16 to FP16</li>
+</ol>
+</li>
+<li>reward unavailable</li>
+<li>hardware errors</li>
+</ol>
+</li>
+<li><strong>Training slow</strong><ol>
+<li>sync between trainer and sampler is hard and inefficient. for example<ul>
+<li>when trainer and sampler are decoupled in different chips, there is huge compute waste since samplers are idle when trainer is working, and vice versa</li>
+<li>when they are colocated, weight hot-swap is slow</li>
+</ul>
+</li>
+<li>rollout slow<ul>
+<li>long tail latency issue (due to long trajactory)</li>
+<li>frequent timeouts, rate limits, and job hanging during distributed env</li>
+</ul>
+</li>
+<li>cost explosion: long-context, multi-agent simulation</li>
+</ol>
+</li>
+<li><strong>Hardware errors &#x2F; tiny bugs</strong><ol>
+<li>With large scale, there constant GPU failures, which take tons of engineering efforts to fix<ul>
+<li>xAI post training scale has been same as pretrain and SFT</li>
+</ul>
+</li>
+<li>Each NVIIDIA GPU generation has quite different sets of hardware errors</li>
+<li>Tiny bugs in rollout, logprob, or reward shaping. silent GPU error.</li>
+</ol>
+</li>
+</ol>
+<h2 id="2-3-Frameworks-APIs"><a href="#2-3-Frameworks-APIs" class="headerlink" title="2.3 Frameworks &#x2F; APIs"></a>2.3 Frameworks &#x2F; APIs</h2><h3 id="2-3-1-Tinker"><a href="#2-3-1-Tinker" class="headerlink" title="2.3.1 Tinker"></a>2.3.1 Tinker</h3><p>Tinker is in the middle</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/b30fedf5-bc35-4e0e-bf4d-0debde7183af.png" srcset="/img/loading.gif" lazyload alt="5803CF2C-6C78-4FCE-8655-5AB3125B30D1_1_105_c.jpeg"></p>
+<p>What does black box API refer to?</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/2e6a1b32-b929-4a22-a262-d277d6857c17.png" srcset="/img/loading.gif" lazyload alt="8D84D3D8-FAC6-40E4-8892-F5DC46CECF69_1_105_c.jpeg"></p>
+<p>What is Tinker API?</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/50f5cdde-f61b-496e-bd0b-3920a2bdb94f.png" srcset="/img/loading.gif" lazyload alt="ABD602F1-2E15-4B09-B9DA-ED3AB0D960BF_1_105_c.jpeg"></p>
+<p>Billing: charged by <strong>tokens</strong> (how to deal with different reward types???)</p>
+<ul>
+<li>for most of them, Train price &#x3D; Sample price; for some of them, Train price is a bit higher</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/b0921f33-260d-447f-b1c6-80a721902825.png" srcset="/img/loading.gif" lazyload alt="FDD5BA87-483D-47BA-9D99-A6290409B72E_1_105_c.jpeg"></p>
+<p>comparasion: Gemini 2.5 <strong>serving</strong> cost</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p>Looks like it’s LoRA at this point.</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/c879b174-56fb-4cd2-98c6-5dc0a8c76320.png" srcset="/img/loading.gif" lazyload alt="1EDE9B9E-7362-4422-85D5-42D0C6714B24_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/ed0d71b5-da14-4241-b05e-3ceebd6d6338.png" srcset="/img/loading.gif" lazyload alt="41FBE548-E8A1-4191-9729-F8E8BE2E7638_1_105_c.jpeg"></p>
+<h3 id="2-3-2-SkyRL"><a href="#2-3-2-SkyRL" class="headerlink" title="2.3.2 SkyRL"></a>2.3.2 SkyRL</h3><p><strong>Different RL need different stacks</strong></p>
+<ul>
+<li><strong>RLHF (single-turn, no tools)</strong>: short context, short rollouts. training dominates; simple to colocate.</li>
+<li><strong>Reasoning (single-turn w&#x2F; long context)</strong>: inference dominates</li>
+<li><strong>Agents (multi-turn, tools, env interactions)</strong>: long contexts, multiple env interactions, system requirements different across components; need new stack</li>
+</ul>
+<p><strong>SkyRL architecture</strong></p>
+<ul>
+<li>Controller: Manages training control flow, algorithm definitions, component placement &amp; scaling, and resource spin-up&#x2F;tear-down.</li>
+<li>Trainer:<ul>
+<li>Megatron &#x2F; FSDP support</li>
+<li>LoRA, MoE, multi-node parallelism.</li>
+<li>Can be <em>colocated</em> with or <em>decoupled</em> from inference workers</li>
+</ul>
+</li>
+<li>Generator:<ul>
+<li>vLLM, SGLang</li>
+<li>the most customized part</li>
+</ul>
+</li>
+<li>SkyRL-Gym env</li>
+<li>SkyRL-Agent:<ul>
+<li>Manages trajectory generation for agentic tasks</li>
+<li>Supports running generation across different training backends and execution environments (e.g., async VM pools).</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-3-3-Slime-SGLang’s-Slime-based-RL-framework"><a href="#2-3-3-Slime-SGLang’s-Slime-based-RL-framework" class="headerlink" title="2.3.3 Slime &amp; SGLang’s Slime-based RL framework"></a>2.3.3 Slime &amp; SGLang’s Slime-based RL framework</h3><p>Slime: created by Tsinghua University and Alibaba Ant</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/THUDM/slime">https://github.com/THUDM/slime</a></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p>SGLang’s new product: add features like fault tolerance based on Slime</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/ad209a4d-57aa-4463-bf4c-d5ed83711381.png" srcset="/img/loading.gif" lazyload alt="EC8623C7-0E16-4BC6-844E-B8C2715376FE_1_105_c.jpeg"></p>
+<p><strong>Multi-turn RL specifics &amp; complexities</strong></p>
+<ul>
+<li><strong>Agent loop complexity</strong>: generation → decide tool call → call tool → process tool output → continue</li>
+<li><strong>long-tail effect</strong></li>
+<li><strong>profiling is hard</strong>:multi-component pipeline (inference, tool, env, verifier, storage) is hard to monitor and analyze</li>
+</ul>
+<p><strong>Training–inference mismatch</strong></p>
+<ul>
+<li>Inference logprobs ≠ training logprobs<ul>
+<li>non-associative FP arithmetic</li>
+<li>kernel nondeterminism with different batch sizes</li>
+<li>MoE-specific activation differences: expert routing biases</li>
+</ul>
+</li>
+</ul>
+<p><strong>Solutions</strong></p>
+<ul>
+<li>batch-invariant kernels</li>
+<li>re-shard MoE for co-located placement; recude routing differences</li>
+<li>truncated importance sampling</li>
+</ul>
+<h2 id="2-4-Scaling-RL-Cursor"><a href="#2-4-Scaling-RL-Cursor" class="headerlink" title="2.4 Scaling RL @ Cursor"></a>2.4 Scaling RL @ Cursor</h2><p><a target="_blank" rel="noopener" href="https://cursor.com/blog/tab-rl">https://cursor.com/blog/tab-rl</a></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/aa2b78bd-c5a3-4898-9c8f-b879ddde43ce.png" srcset="/img/loading.gif" lazyload alt="687D1C93-DCCB-4A73-A5D5-9059202400DB_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/357aeb2e-8bf0-4595-aff9-6a451436a8ec.png" srcset="/img/loading.gif" lazyload alt="D08442F3-BC28-44EA-BDBF-9AA56B03C305_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/9fc53ccd-d5a1-4c25-a507-e124041fff7f.png" srcset="/img/loading.gif" lazyload alt="5558E9D2-B6CF-4801-A315-96C9EADD56DF_1_105_c.jpeg"></p>
+<p>Env consistency is important</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/94da26dc-b179-4d23-bf02-9a8604cb8953.png" srcset="/img/loading.gif" lazyload alt="7B485B89-DD65-447D-B6FC-53F63A264089_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/3a00903b-4b02-486b-8c75-abea6397f839.png" srcset="/img/loading.gif" lazyload alt="61D7C57B-1488-44CE-A7A5-82DCC04BE32C_1_105_c.jpeg"></p>
+<p>Controller</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/e0b83dda-6306-49c7-a1df-cb40a04a280b.png" srcset="/img/loading.gif" lazyload alt="FA5037A3-6DA1-410B-BDD9-643ACBFDD8AA_1_105_c.jpeg"></p>
+<p>What do we learn?</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/6551656a-ff69-4f37-8bc7-de56199df30a.png" srcset="/img/loading.gif" lazyload alt="EF989143-4E88-4EE5-9265-CF39CC43FC5D_1_105_c.jpeg"></p>
+<h2 id="2-5-verl"><a href="#2-5-verl" class="headerlink" title="2.5 verl"></a>2.5 verl</h2><p>RL is a multi-model, multi-workload pipeline</p>
+<p>RL: complex distributed dataflow graph </p>
+<ul>
+<li>multi-model: policy model, reward model, reference model (constrains the policy’s KL divergence), value model (long-term return)</li>
+<li>mumulti-workload: generation, inference, training, and weight sync</li>
+<li><strong>single-controller</strong><ul>
+<li>each worker running different programs</li>
+<li>simple; ideal for rapid experiments</li>
+</ul>
+</li>
+<li><strong>multi-controller</strong><ul>
+<li>each worker has its own controller</li>
+<li>fits naturally with distributed  backends like FSDP &#x2F; Megatron</li>
+<li>better performance</li>
+</ul>
+</li>
+<li><strong>hybrid-controller</strong><ul>
+<li>a central controller for high-level RL logic</li>
+<li>multiple controllers for distributed execution</li>
+</ul>
+</li>
+</ul>
+<h2 id="2-6-Other-RL-topics"><a href="#2-6-Other-RL-topics" class="headerlink" title="2.6 Other RL topics"></a>2.6 Other RL topics</h2><p><strong>Kimi K2 thinking</strong></p>
+<p>similar to DeepSeek ****R1, differences:</p>
+<ul>
+<li>recuded number of attention heads: R1 &#x3D; 128,K2 &#x3D; 64</li>
+<li>increased number of experts: 256 → 384</li>
+<li>R1 first 3 layers are FFN. K2 only the 1st layer is FFN. more aggressive MoEs</li>
+</ul>
+<p><strong>Specialized models</strong></p>
+<ul>
+<li>One base model + multiple fine-tuned models (e.g., tool use models)</li>
+<li>GPT5 smart router</li>
+<li>vLLM semantic router <a target="_blank" rel="noopener" href="https://github.com/vllm-project/semantic-router">https://github.com/vllm-project/semantic-router</a>:</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/image%203.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/image%204.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="3-Inference"><a href="#3-Inference" class="headerlink" title="3. Inference"></a>3. Inference</h1><h2 id="3-1-Elastic-EP"><a href="#3-1-Elastic-EP" class="headerlink" title="3.1 Elastic EP"></a>3.1 Elastic EP</h2><p>Elastic Expert Parallelism (EEP) — Fine-Grained Scaling</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/ffb6360b-e21a-4bb5-8a8d-bc0500d9a1ce.png" srcset="/img/loading.gif" lazyload alt="CB427C1D-8679-4F5E-8141-9063F8398D9D_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/9d1a0f5f-674b-4600-addd-cbc7ab1e9720.png" srcset="/img/loading.gif" lazyload alt="BA292AA1-9456-44BE-ABA2-05D255734C09_1_105_c.jpeg"></p>
+<p>Elastic EP introduces expert-group-level elasticity, allowing the system to:</p>
+<ul>
+<li>Scale up&#x2F;down adaptively with online traffic.</li>
+<li>Recover gracefully from GPU faults.</li>
+<li>Optimize cost efficiency through partial rescaling.</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/c98144b1-3bee-4afc-96e6-bf3f4bc148f3.png" srcset="/img/loading.gif" lazyload alt="942079D2-C2C5-459E-B38D-45D8550AA958_1_105_c.jpeg"></p>
+<p>Ray-based orchestration is key:</p>
+<ul>
+<li>Each <em>EngineCore</em> represents a parallelized expert block.</li>
+<li>The Coordinator manages data-parallel communicators and distributed GPU workers.</li>
+<li>Scaling commands (scale up&#x2F;down) trigger reinitialization of EP communicators, weight resharding, and CUDA graph recapturing.</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/4D033E71-D8B0-4E95-BB4E-0C6526A5E063_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="4D033E71-D8B0-4E95-BB4E-0C6526A5E063_1_105_c.jpeg"></p>
+<p>EPLB</p>
+<ul>
+<li>Transfers weights peer-to-peer instead of from disk, reducing recovery latency.</li>
+<li>CUDA graphs are recaptured incrementally, only for the modified subgraphs of MoE blocks.</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/56cf3517-6439-4d50-9e50-ef8713c20e56.png" srcset="/img/loading.gif" lazyload alt="15D91AD1-0D49-4255-B122-FDE9419A4B1D_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/10b7b1f1-ed23-4075-bf06-19a66ba22479.png" srcset="/img/loading.gif" lazyload alt="F9DF2C34-B36C-4BF2-8F74-6F74BB453A2E_1_105_c.jpeg"></p>
+<p>We don’t need to reallocate all compute buffers or recapture the entire CUDA graph — only the modified subgraphs.</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/4bf74bc5-9229-42eb-a4db-210e1fe7c690.png" srcset="/img/loading.gif" lazyload alt="977394E9-6E87-4FD8-AC7E-C904EA813BFF_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/fca31ca4-b2fe-413f-8131-f2b4e1d18412.png" srcset="/img/loading.gif" lazyload alt="1F1696A2-DDBA-49FF-8871-2FBB441EE59F_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/8f1f0355-0e74-46ae-9f8f-67adc15b2ffc.png" srcset="/img/loading.gif" lazyload alt="9EAC9F8E-FF3C-4AFA-9F8D-47E5EFCF7301_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/522d9ddd-043f-4608-bc77-feb9b57f6180.png" srcset="/img/loading.gif" lazyload alt="E82E61B9-BF20-4A13-8C2C-726144CE46A5_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/1D3D93CF-35C0-4D56-A8A6-451D508FEAC2_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="1D3D93CF-35C0-4D56-A8A6-451D508FEAC2_1_105_c.jpeg"></p>
+<h2 id="3-2-AIBrix"><a href="#3-2-AIBrix" class="headerlink" title="3.2 AIBrix"></a>3.2 AIBrix</h2><p><img src="/img/PyTorch_Conf_Ray_summit_2025/B89D1E80-72C1-4182-8230-9C99424C487E_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="B89D1E80-72C1-4182-8230-9C99424C487E_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/4EE8040E-92BE-411F-BA0B-DE135C30DEDF_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="4EE8040E-92BE-411F-BA0B-DE135C30DEDF_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/7CED5062-BA37-4875-B7F8-073BED613A60_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="7CED5062-BA37-4875-B7F8-073BED613A60_1_105_c.jpeg"></p>
+<p>Router-driven vs engine-driven KV indexing</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/79879abe-8856-40ca-b368-00ace7c5e6c3.png" srcset="/img/loading.gif" lazyload alt="8D01CEB3-11FB-450F-A5D0-240F6A68A3DC_1_105_c.jpeg"></p>
+<h2 id="3-3-Spotify-with-vLLM-on-TPU"><a href="#3-3-Spotify-with-vLLM-on-TPU" class="headerlink" title="3.3 Spotify with vLLM on TPU"></a>3.3 Spotify with vLLM on TPU</h2><p><img src="/img/PyTorch_Conf_Ray_summit_2025/7997b4f4-5b32-475d-bafa-0ea36446fcda.png" srcset="/img/loading.gif" lazyload alt="68384C85-1899-4A93-A1BF-6DFFCB99CFBA_1_105_c.jpeg"></p>
+<p>Workloads</p>
+<ul>
+<li>entity mapping accross medium</li>
+<li>AI playlist</li>
+<li>AI DJ interaction</li>
+<li>Spotify safety</li>
+</ul>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/9879f448-7b25-45fa-918c-6e203db4e7e8.png" srcset="/img/loading.gif" lazyload alt="2713EB9E-C4BF-460B-84C9-9462ACFC19A8_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/2962bf36-5554-4d4d-8b8f-f4f5c5a00b2d.png" srcset="/img/loading.gif" lazyload alt="CF20AC27-EF77-40FA-A706-902801E1F861_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/4dc6d67b-0edc-41ce-8cd3-108dcc4fc319.png" srcset="/img/loading.gif" lazyload alt="52F689CE-5663-4A5E-AE43-FCD78E553D5B_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/ee6ca06b-038b-4838-a951-cd939d41e4df.png" srcset="/img/loading.gif" lazyload alt="1EBA0AD8-CD69-4FC5-9EDF-3A840E5DBE46_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/d1d48dbe-ce13-433d-855a-d79f3107e3d9.png" srcset="/img/loading.gif" lazyload alt="7A3F674B-17B7-4EA1-977B-1EBFDDBE091B_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/c7eeb4be-48e6-4e5c-be17-700cba9c2160.png" srcset="/img/loading.gif" lazyload alt="9D3030B0-8606-462D-A217-DD21FE688A3B_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/959ae577-94b4-460f-bdd3-f08c49d763c5.png" srcset="/img/loading.gif" lazyload alt="6A9277FE-3ADE-4AE1-A18A-EE755520CE06_1_105_c.jpeg"></p>
+<h1 id="4-PyTorch-updates"><a href="#4-PyTorch-updates" class="headerlink" title="4. PyTorch updates"></a>4. PyTorch updates</h1><p><img src="/img/PyTorch_Conf_Ray_summit_2025/09e729e5-f99b-4a04-bd8d-586a5ff1f10d.png" srcset="/img/loading.gif" lazyload alt="6B46266F-D836-4A96-9CD2-C4230EDC0E53_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/9648db16-af2b-4fb3-88ee-ad294663b180.png" srcset="/img/loading.gif" lazyload alt="0864FF1A-1EF1-48B7-8A1C-DCD3FAD3D430_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/3cd9e47d-1078-44b5-b640-e1535cbb109e.png" srcset="/img/loading.gif" lazyload alt="C8F81C61-02B3-4E4D-98A6-C266A618A6AA_1_105_c.jpeg"></p>
+<p>Monarch: Ray’s competitor</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/526dc90c-3aa9-4e82-904d-98d9fef4d30d.png" srcset="/img/loading.gif" lazyload alt="4AFC9233-F548-49A3-8DAA-AE93A0BEE8E2_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/65a8719e-e0b7-4ab6-8e7e-2a97f566bc25.png" srcset="/img/loading.gif" lazyload alt="DBFB0E4B-E583-4DDC-BB9C-A211D0263BF3_1_105_c.jpeg"></p>
+<p>Inference</p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/62af6237-bcb8-42bf-8c3f-01653c62f0ea.png" srcset="/img/loading.gif" lazyload alt="14C4DC84-09CB-42F0-880E-E45F31222D31_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/BFA6CE5C-1DF2-45DE-BD64-822F46666B80_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="BFA6CE5C-1DF2-45DE-BD64-822F46666B80_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/94841852-1161-4FB0-9DB2-1E882C874733_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="94841852-1161-4FB0-9DB2-1E882C874733_1_105_c.jpeg"></p>
+<p><img src="/img/PyTorch_Conf_Ray_summit_2025/7F715401-F860-4F5F-A511-FB05BA693256_1_105_c.jpeg" srcset="/img/loading.gif" lazyload alt="7F715401-F860-4F5F-A511-FB05BA693256_1_105_c.jpeg"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/RL/" class="print-no-link">#RL</a>
+      
+        <a href="/tags/LLM-inference/" class="print-no-link">#LLM inference</a>
+      
+        <a href="/tags/meetup/" class="print-no-link">#meetup</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Pytorch Conference &amp; Ray Summit 2025 summary</div>
+      <div>https://gdymind.github.io/2025/11/11/Pytorch-Conference-Ray-Summit-2025-summary/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>November 11, 2025</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/05/Jeff-Dean-at-NeurIPS-2025/" title="Jeff Dean &amp; Gemini team QA at NeurIPS ‘25">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Jeff Dean &amp; Gemini team QA at NeurIPS ‘25</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/09/Intro-to-PPO-in-RL/" title="Intro to PPO in RL">
+                        <span class="hidden-mobile">Intro to PPO in RL</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2025/11/11/Pytorch-Conference-Ray-Summit-2025-summary/';
+          this.page.identifier = '/2025/11/11/Pytorch-Conference-Ray-Summit-2025-summary/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        visited 
+        <span id="busuanzi_value_site_pv"></span>
+         times
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        unique visitors: 
+        <span id="busuanzi_value_site_uv"></span>
+        
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
