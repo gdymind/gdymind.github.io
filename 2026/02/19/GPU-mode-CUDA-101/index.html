@@ -1,0 +1,831 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;NQ-0D5Ti2dc&amp;t&#x3D;9s https:&#x2F;&#x2F;github.com&#x2F;gpu-mode&#x2F;lectures&#x2F;tree&#x2F;main&#x2F;lecture_002 from PMPP book 1. Memory allocation nvidia devices come with their own DRAM (device) glo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPU mode - lecture2 - CUDA 101">
+<meta property="og:url" content="https://gdymind.github.io/2026/02/19/GPU-mode-CUDA-101/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;NQ-0D5Ti2dc&amp;t&#x3D;9s https:&#x2F;&#x2F;github.com&#x2F;gpu-mode&#x2F;lectures&#x2F;tree&#x2F;main&#x2F;lecture_002 from PMPP book 1. Memory allocation nvidia devices come with their own DRAM (device) glo">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%201.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%202.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%203.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%204.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%205.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%206.png">
+<meta property="og:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%207.png">
+<meta property="article:published_time" content="2026-02-20T07:48:07.000Z">
+<meta property="article:modified_time" content="2026-02-20T07:54:27.778Z">
+<meta property="article:author" content="gdymind">
+<meta property="article:tag" content="kernel">
+<meta property="article:tag" content="GPU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://gdymind.github.io/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>GPU mode - lecture2 - CUDA 101 - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="GPU mode - lecture2 - CUDA 101"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-19 23:48" pubdate>
+          February 19, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          404 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          4 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">GPU mode - lecture2 - CUDA 101</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=NQ-0D5Ti2dc&t=9s">https://www.youtube.com/watch?v=NQ-0D5Ti2dc&amp;t=9s</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/gpu-mode/lectures/tree/main/lecture_002">https://github.com/gpu-mode/lectures/tree/main/lecture_002</a></p>
+<p>from PMPP book</p>
+<h1 id="1-Memory-allocation"><a href="#1-Memory-allocation" class="headerlink" title="1. Memory allocation"></a>1. Memory allocation</h1><ul>
+<li>nvidia devices come with their own DRAM (device) global memory</li>
+<li>cudaMalloc &amp; cudaFree:</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-type">float</span> *A_d;<br><span class="hljs-type">size_t</span> size = n * <span class="hljs-built_in">sizeof</span>(<span class="hljs-type">float</span>); 	<span class="hljs-comment">// size in bytes</span><br><span class="hljs-built_in">cudaMalloc</span>((<span class="hljs-type">void</span>**)&amp;A_d, size);	<span class="hljs-comment">// pointer to pointer!</span><br>...<br><span class="hljs-built_in">cudaFree</span>(A_d);<br></code></pre></td></tr></table></figure>
+
+<p>cudaMemcpy: Host &lt;-&gt; Device Transfer</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">// copy input vectors to device (host -&gt; device)</span><br><span class="hljs-built_in">cudaMemcpy</span>(A_d, A_h, size, cudaMemcpyHostToDevice);<br><span class="hljs-built_in">cudaMemcpy</span>(B_d, B_h, size, cudaMemcpyHostToDevice);<br>...<br><span class="hljs-comment">// transfer result back to CPU memory (device -&gt; host)</span><br><span class="hljs-built_in">cudaMemcpy</span>(C_h, C_d, size, cudaMemcpyDeviceToHost);<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>size is the number of bytes</li>
+</ul>
+<p><strong>CUDA Error handling</strong>: CUDA functions return <code>cudaError_t</code> .. if not <code>cudaSuccess</code> we have a problem …</p>
+<h1 id="2-Kernel-functions-fn"><a href="#2-Kernel-functions-fn" class="headerlink" title="2. Kernel functions  fn&lt;&lt;&gt;&gt;"></a><strong>2. Kernel functions  <code>fn&lt;&lt;&gt;&gt;</code></strong></h1><ul>
+<li>Launching kernel &#x3D; grid of threads is launched</li>
+<li>All threads execute the same code: Single program multiple-data (SPMD)</li>
+<li>Threads are hierarchically organized into <strong>grid blocks</strong> &amp; <strong>thread blocks</strong></li>
+<li>up to 1024 threads can be in a thread block</li>
+</ul>
+<p><strong>Kernel Coordinates</strong></p>
+<ul>
+<li><p>built-in variables available inside the kernel: <strong><code>blockIdx</code></strong>, <strong><code>threadIdx</code></strong></p>
+</li>
+<li><p>these “coordinates” allow threads (all executing the same code) to identify what to do (e.g. which portion of the data to process)</p>
+</li>
+<li><p>each thread can be uniquely identified by <code>threadIdx</code> &amp; <code>blockIdx</code></p>
+</li>
+<li><p>built-in <code>blockDim</code> tells us the number of threads in a block</p>
+</li>
+<li><p>for vector addition we can calculate the array index of the thread</p>
+<p>  <code>int i = blockIdx.x * blockDim.x + threadIdx.x;</code></p>
+</li>
+</ul>
+<p><strong>Threads execute the same kernel code</strong></p>
+<p><strong><strong><strong>global</strong></strong> &amp; <strong>host</strong></strong></p>
+<ul>
+<li>declare a kernel function with <code>__global__</code></li>
+<li>calling a <code>__global__</code> function -&gt; launches new grid of cuda threads</li>
+<li>functions declared with <code>__device__</code> can be called from within a cuda thread</li>
+<li>if both <code>__host__</code> &amp; <code>__device__</code> are used in a function declaration CPU &amp; GPU versions will be compiled</li>
+</ul>
+<p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="3-Vector-Addition-Example"><a href="#3-Vector-Addition-Example" class="headerlink" title="3. Vector Addition Example"></a><strong>3. Vector Addition Example</strong></h1><ul>
+<li>general strategy: replace loop by grid of threads</li>
+<li>data sizes might not perfectly divisible by block sizes: always check bounds</li>
+<li>prevent threads of boundary block to read&#x2F;write outside allocated memory</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-number">01</span> <span class="hljs-comment">// compute vector sum C = A + B</span><br><span class="hljs-number">02</span> <span class="hljs-comment">// each thread peforms one pair-wise addition</span><br><span class="hljs-number">03</span> __global__<br><span class="hljs-number">04</span> <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">vecAddKernel</span><span class="hljs-params">(<span class="hljs-type">float</span>* A, <span class="hljs-type">float</span>* B, <span class="hljs-type">float</span>* C, <span class="hljs-type">int</span> n)</span> </span>&#123;<br><span class="hljs-number">05</span>  <span class="hljs-type">int</span> i = threadIdx.x + blockDim.x * blockIdx.x;<br><span class="hljs-number">06</span>  <span class="hljs-keyword">if</span> (i &lt; n) &#123;	<span class="hljs-comment">// check bounds</span><br><span class="hljs-number">07</span>    C[i] = A[i] + B[i];<br><span class="hljs-number">0</span>8  &#125;<br><span class="hljs-number">0</span>9 &#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>Calling Kernels</strong></p>
+<ul>
+<li>kernel configuration is specified between <code>&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;</code><ul>
+<li>number of blocks, number of threads in each block</li>
+</ul>
+</li>
+<li>we will learn about additional launch parameters (shared-mem size, cudaStream) later</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-function">dim3 <span class="hljs-title">numThreads</span><span class="hljs-params">(<span class="hljs-number">256</span>)</span></span>;<br><span class="hljs-function">dim3 <span class="hljs-title">numBlocks</span><span class="hljs-params">((n + numThreads - <span class="hljs-number">1</span>) / numThreads)</span></span>;<br>vecAddKernel&lt;&lt;&lt;numBlocks, numThreads&gt;&gt;&gt;(A_d, B_d, C_d, n);<br></code></pre></td></tr></table></figure>
+
+<p><strong>Compiler</strong></p>
+<ul>
+<li>nvcc (NVIDIA C compiler) is used to compile kernels into PTX</li>
+<li>Parallel Thread Execution (PTX) is a low-level VM &amp; instruction set</li>
+<li>graphics driver translates PTX into executable binary code (SASS)</li>
+</ul>
+<h1 id="4-Grid"><a href="#4-Grid" class="headerlink" title="4. Grid"></a>4. Grid</h1><ul>
+<li>CUDA grid: 2 level hierarchy: <strong>blocks</strong>, <strong>threads</strong></li>
+<li>Idea: map threads to multi-dimensional data</li>
+<li>all threads in a grid <strong>execute the same kernel</strong></li>
+<li>threads in same block can access the same shared mem</li>
+<li>max block size: 1024 threads</li>
+<li>built-in 3D coordinates of a thread: <strong><code>blockIdx</code></strong>, <strong><code>threadIdx</code></strong> - identify which portion of the data to process</li>
+<li>shape of grid &amp; blocks:<ul>
+<li><strong><code>gridDim</code>: number of blocks in the grid</strong></li>
+<li><strong><code>blockDim</code>: number of threads in a block</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>grid can be different for each kernel launch, e.g. dependent on data shapes</li>
+<li>typical grids contain thousands to millions of threads</li>
+<li>simple strategy: one thread per output element (e.g. one thread per pixel, one thread per tensor element)</li>
+<li><strong>threads can be scheduled in any order</strong></li>
+<li>can use fewer than 3 dims (set others to 1)</li>
+<li>e.g. 1D for sequences, 2D for images etc.</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-function">dim3 <span class="hljs-title">grid</span><span class="hljs-params">(<span class="hljs-number">32</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)</span></span>;<br><span class="hljs-function">dim3 <span class="hljs-title">block</span><span class="hljs-params">(<span class="hljs-number">128</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)</span></span>;<br>kernelFunction&lt;&lt;&lt;grid, block&gt;&gt;&gt;(..);<br><span class="hljs-comment">// Number of threads: 128 * 32=4096</span><br></code></pre></td></tr></table></figure>
+
+<p>each dimension has a default value of <code>1</code></p>
+<ul>
+<li><code>dim3(unsigned int vx = 1, unsigned int vy = 1, unsigned int vz = 1);</code></li>
+</ul>
+<p>so we can write <code>dim3 grid(32);</code> in the example above</p>
+<p><strong>Built-in Variables</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cpp">blockIdx	<span class="hljs-comment">// dim3 block coordinate (.x, .y, .z)</span><br>threadIdx	<span class="hljs-comment">// dim3 thread coordinate</span><br>blockDim	<span class="hljs-comment">// number of threads in a block</span><br>gridDim		<span class="hljs-comment">// number of blocks in a grid</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>(blockDim &amp; gridDim have the same values in all threads)</li>
+</ul>
+<h1 id="5-n-d-arrays-in-Memory"><a href="#5-n-d-arrays-in-Memory" class="headerlink" title="5. n-d arrays in Memory"></a><strong>5. n-d arrays in Memory</strong></h1><p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>memory of multi-dim arrays under the hood is flat 1d</li>
+<li>2d array can be linearized different ways:</li>
+<li>torch tensors &amp; numpy ndarrays use strides to specify how elements are laid out in memory.</li>
+</ul>
+<p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%203.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="6-image-bluring-example"><a href="#6-image-bluring-example" class="headerlink" title="6. image bluring example"></a>6. image bluring example</h1><ul>
+<li><p>mean filter example <code>blurKernel</code></p>
+<p>  <img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%204.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+</li>
+<li><p>each thread writes one output element, reads multiple values</p>
+<ul>
+<li>we have a loop inside the kernel</li>
+</ul>
+</li>
+<li><p>shows row-major pixel memory access (in &amp; out pointers)</p>
+</li>
+<li><p>track of how many pixels values are summed (to do the mean division)</p>
+</li>
+<li><p>handles boundary conditions</p>
+<p>  <img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%205.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+</li>
+</ul>
+<p>kernel code</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-function">__global__</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">mean_filter_kernel</span><span class="hljs-params">(<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>* output, <span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>* input, <span class="hljs-type">int</span> width, <span class="hljs-type">int</span> height, <span class="hljs-type">int</span> radius)</span> </span>&#123;<br>    <span class="hljs-type">int</span> col = blockIdx.x * blockDim.x + threadIdx.x;<br>    <span class="hljs-type">int</span> row = blockIdx.y * blockDim.y + threadIdx.y;<br>    <span class="hljs-type">int</span> channel = threadIdx.z;<br><br>    <span class="hljs-type">int</span> baseOffset = channel * height * width;<br>    <span class="hljs-keyword">if</span> (col &lt; width &amp;&amp; row &lt; height) &#123;<br><br>        <span class="hljs-type">int</span> pixVal = <span class="hljs-number">0</span>;<br>        <span class="hljs-type">int</span> pixels = <span class="hljs-number">0</span>;<br><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> blurRow=-radius; blurRow &lt;= radius; blurRow += <span class="hljs-number">1</span>) &#123;<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> blurCol=-radius; blurCol &lt;= radius; blurCol += <span class="hljs-number">1</span>) &#123;<br>                <span class="hljs-type">int</span> curRow = row + blurRow;<br>                <span class="hljs-type">int</span> curCol = col + blurCol;<br>                <span class="hljs-keyword">if</span> (curRow &gt;= <span class="hljs-number">0</span> &amp;&amp; curRow &lt; height &amp;&amp; curCol &gt;=<span class="hljs-number">0</span> &amp;&amp; curCol &lt; width) &#123;<br>                    pixVal += input[baseOffset + curRow * width + curCol];<br>                    pixels += <span class="hljs-number">1</span>;<br>                &#125;<br>            &#125;<br>        &#125;<br><br>        output[baseOffset + row * width + col] = (<span class="hljs-type">unsigned</span> <span class="hljs-type">char</span>)(pixVal / pixels);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="7-Matrix-Multiplication"><a href="#7-Matrix-Multiplication" class="headerlink" title="7. Matrix Multiplication"></a><strong>7. Matrix Multiplication</strong></h1><ul>
+<li>compute inner-products of rows &amp; columns</li>
+<li>Strategy: 1 thread per output matrix element</li>
+<li>Example: Multiplying square matrices (rows &#x3D;&#x3D; cols)</li>
+</ul>
+<p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%206.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><img src="/img/GPU%20mode%20-%20lecture2%20-%20CUDA%20101/image%207.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/kernel/" class="print-no-link">#kernel</a>
+      
+        <a href="/tags/GPU/" class="print-no-link">#GPU</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>GPU mode - lecture2 - CUDA 101</div>
+      <div>https://gdymind.github.io/2026/02/19/GPU-mode-CUDA-101/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>February 19, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/02/19/Pallas-101/" title="Pallas 101 - multi-backend kernel for JAX">
+                        <span class="hidden-mobile">Pallas 101 - multi-backend kernel for JAX</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2026/02/19/GPU-mode-CUDA-101/';
+          this.page.identifier = '/2026/02/19/GPU-mode-CUDA-101/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        visited 
+        <span id="busuanzi_value_site_pv"></span>
+         times
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        unique visitors: 
+        <span id="busuanzi_value_site_uv"></span>
+        
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
