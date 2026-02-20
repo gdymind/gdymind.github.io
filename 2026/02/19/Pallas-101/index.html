@@ -1,0 +1,968 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. why pallas? JAX works with pure functions (i.e., same inputs will produce the same outputs). JAX arrays are immutable not flexible or efficient for kernel implementation  GEMM steps  input matrix →">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pallas 101 - multi-backend kernel for JAX">
+<meta property="og:url" content="https://gdymind.github.io/2026/02/19/Pallas-101/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="1. why pallas? JAX works with pure functions (i.e., same inputs will produce the same outputs). JAX arrays are immutable not flexible or efficient for kernel implementation  GEMM steps  input matrix →">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-02-20T07:31:24.000Z">
+<meta property="article:modified_time" content="2026-02-20T07:32:33.784Z">
+<meta property="article:author" content="gdymind">
+<meta property="article:tag" content="JAX">
+<meta property="article:tag" content="TPU">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Pallas 101 - multi-backend kernel for JAX - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Pallas 101 - multi-backend kernel for JAX"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-19 23:31" pubdate>
+          February 19, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          674 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Pallas 101 - multi-backend kernel for JAX</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-why-pallas"><a href="#1-why-pallas" class="headerlink" title="1. why pallas?"></a>1. why pallas?</h1><ul>
+<li>JAX works with pure functions (i.e., same inputs will produce the same outputs). JAX arrays are immutable</li>
+<li>not flexible or efficient for kernel implementation</li>
+</ul>
+<p>GEMM steps</p>
+<ul>
+<li>input matrix → tiles</li>
+<li>do GEMM with tile combinations</li>
+<li>write back results to the correct position</li>
+<li>loop over tiles</li>
+</ul>
+<p>Difficulties with JAX</p>
+<ul>
+<li>need to update buffers for many many times (i.e., for accumulators)<ul>
+<li>pure function’s update are out-of-place → inefficient copy</li>
+</ul>
+</li>
+<li>need an efficient way to specify which part of the input&#x2F;output is the current working set</li>
+<li>need to run kernel multiple times (with different tiles)</li>
+<li>need to manage memory explictly</li>
+</ul>
+<p>Pallas’s new abstractions: Ref, grid, BlockSpec, and pallas_call</p>
+<h1 id="2-layered-design"><a href="#2-layered-design" class="headerlink" title="2. layered design"></a>2. layered design</h1><ul>
+<li><code>jax.experimental.pallas</code> abstractions commonly used by all backends</li>
+<li><code>jax.experimental.pallas.tpu as pltpu</code>: for TPU</li>
+<li><code>jax.experimental.pallas.triton</code>: for Triton</li>
+<li><code>jax.experimental.pallas.mosaic_gpu</code>: for Mosaic GPU</li>
+</ul>
+<p>we usually import them as <code>pl</code>, <code>pltpu</code>, <code>pltriton</code> and <code>plgpu</code> </p>
+<h1 id="3-Pallas-concepts"><a href="#3-Pallas-concepts" class="headerlink" title="3. Pallas concepts"></a>3. Pallas concepts</h1><p><code>pl</code> provides a unified name space. core compents:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ref</code></td>
+<td>mutable view of memory</td>
+</tr>
+<tr>
+<td><code>grid</code> &#x2F; <code>program_id</code> &#x2F; <code>num_programs</code></td>
+<td>program and index</td>
+</tr>
+<tr>
+<td><code>BlockSpec</code> &#x2F; <code>GridSpec</code></td>
+<td>specification for tiling</td>
+</tr>
+<tr>
+<td><code>pallas_call</code></td>
+<td>the interface to integrate kernel into JAX</td>
+</tr>
+</tbody></table>
+<p><code>pltpu</code>, <code>pltriton</code> and <code>plgpu</code> provide backend-specific functions. examples</p>
+<ul>
+<li>TPU: <code>VMEM</code>, <code>SMEM</code></li>
+<li>Triton: <code>atomic_add</code>, <code>load</code>&#x2F;<code>store</code> with mask</li>
+</ul>
+<h1 id="4-Ref"><a href="#4-Ref" class="headerlink" title="4. Ref"></a>4. Ref</h1><ul>
+<li>normal JAX function: input&#x2F;output are both <em>immutable</em> JAX arrays</li>
+<li>Pallas: input&#x2F;output are  <code>Ref</code>s (references to mutable buffers)</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># normal JAX fuction</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">jax_function</span>(<span class="hljs-params">x: jax.Array</span>) -&gt; jax.Array:<br>    <span class="hljs-keyword">return</span> x * <span class="hljs-number">2</span><br><br><span class="hljs-comment"># Pallas kernel</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">pallas_kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    o_ref[...] = x_ref[...] * <span class="hljs-number">2</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>read: use <code>ref[...]</code> to retreive a JAX array from Ref</li>
+<li>write: <code>ref[...] = value</code></li>
+<li><code>Ref</code> also supports indexing&#x2F;slicing like <code>ref[0,:]</code> (the first row)</li>
+<li>Kernel has no return values. It only operates on <code>Ref</code></li>
+</ul>
+<p>sharp bits: explictly distinguish references and values</p>
+<ul>
+<li><code>Ref</code> cannot be used as JAX array, you need to explictly read it like above</li>
+<li>you cannot assign one <code>Ref</code> to another <code>Ref</code> like <code>o_ref[...] = x_ref</code> (no <code>[...]</code> on rhs)</li>
+</ul>
+<h1 id="5-Ref-at-is-still-a-Ref"><a href="#5-Ref-at-is-still-a-Ref" class="headerlink" title="5. Ref.at  is still a Ref"></a>5. <code>Ref.at</code>  is still a <code>Ref</code></h1><p>In JAX or numpy, we use <code>.at</code> to set value directly</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">new_array = array.at[<span class="hljs-number">0</span>].<span class="hljs-built_in">set</span>(value)<br></code></pre></td></tr></table></figure>
+
+<p>However, <code>.at</code> in Ref just provides sub-view that is also a <code>Ref</code> </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">sub_ref = x_ref.at[<span class="hljs-number">0</span>:<span class="hljs-number">64</span>] <span class="hljs-comment"># still a Ref</span><br>value = sub_ref[...]<br>sub_ref[...] = new_value<br></code></pre></td></tr></table></figure>
+
+<p>use case 1: pass a portion of the current Ref to another function</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">process_tile</span>(<span class="hljs-params">in_tile_ref, out_tile_ref</span>):<br>    out_tile_ref[...] = in_tile_ref[...] * <span class="hljs-number">2</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">4</span>):<br>        in_tile = x_ref.at[i*<span class="hljs-number">64</span>:(i+<span class="hljs-number">1</span>)*<span class="hljs-number">64</span>, :]<br>        out_tile = o_ref.at[i*<span class="hljs-number">64</span>:(i+<span class="hljs-number">1</span>)*<span class="hljs-number">64</span>, :]<br>        process_tile(in_tile, out_tile)<br></code></pre></td></tr></table></figure>
+
+<p>use case 2: to work with <code>load</code> &#x2F; <code>store</code> with backends like Triton</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">row = pltriton.load(input_ref.at[pl.ds(<span class="hljs-number">0</span>, block_row)],<br>			mask=mask, other=-<span class="hljs-built_in">float</span>(inf))<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>this line of code focuses on efficiently moving data from global memory into the fast local memory of the processor</li>
+<li><code>input_ref.at[...]</code>: indexing<ul>
+<li>it specifies <em>which</em> part of the global input buffer you want to look at without actually loading the data yet</li>
+<li><code>pl.ds(0, block_row)</code>: dynamic slicing for Pallas. the kernel is selecting a specific slice of the input, starting at index 0 and spanning a length of <code>block_row</code></li>
+</ul>
+</li>
+<li><code>pltriton.load(...)</code>: the memory op<ul>
+<li>it takes the <code>Ref</code> sub-view created by <code>.at</code> and pulls that specific chunk of data from high-bandwidth memory (HBM) into registers or SRAM</li>
+<li>the result, <code>row</code>, becomes a standard <code>jax.Array</code> (or a Triton-compatible tensor) that you can perform math on.</li>
+</ul>
+</li>
+<li><code>mask=mask</code>: the Guardrail<ul>
+<li>in tiled kernels, the “tile size” often doesn’t perfectly divide the “matrix size.”<ul>
+<li>For example, if your tile is 64 but you only have 10 elements left, you don’t want to read out-of-bounds memory</li>
+</ul>
+</li>
+<li>the <code>mask</code> (usually a boolean array) tells the hardware which specific elements within that block are valid to read.</li>
+</ul>
+</li>
+<li><code>other=-float(inf)</code>: what value to use for the elements where the <code>mask</code> is <code>False</code></li>
+</ul>
+<h1 id="6-grid-program"><a href="#6-grid-program" class="headerlink" title="6. grid &amp; program"></a><strong>6. grid &amp; program</strong></h1><p>grid</p>
+<ul>
+<li>normal JAX program: excuete once and return</li>
+<li>Pallas kernel: execute multiple times following the <em><strong>grid</strong></em> pattern</li>
+</ul>
+<p>grid dimension</p>
+<ul>
+<li>1d grid: <code>pl.pallas_call(kernel, grid=(4,), out_shape=...)</code><ul>
+<li>conceptually, it means <code>for i in range(4): kernel(...)</code></li>
+</ul>
+</li>
+<li>2d grid: <code>pl.pallas_call(kernel, grid=(3, 2), out_shape=...)</code><ul>
+<li><p>conceptually it means</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">3</span>):<br>    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">2</span>):<br>        kernel(...) <br></code></pre></td></tr></table></figure>
+</li>
+<li><p>in this example, the kernel is executed 6 times, where each execution is called a <em><strong>program</strong></em></p>
+</li>
+</ul>
+</li>
+</ul>
+<p>program id</p>
+<ul>
+<li><p>we can get the grid of a program in a kernel</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    i = pl.program_id(axis=<span class="hljs-number">0</span>)  <span class="hljs-comment"># id of dimension 0</span><br>    j = pl.program_id(axis=<span class="hljs-number">1</span>)  <span class="hljs-comment"># id of dimension 1</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>we can get the dimension len using <code>pl.num_programs(axis)</code></p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    total_rows = pl.num_programs(axis=<span class="hljs-number">0</span>) <span class="hljs-comment"># length of dimension 0</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>grid can be named: <code>grid=((&#39;batch&#39;, 4), (&#39;feature&#39;, 8))</code></p>
+</li>
+<li><p>int grid will be promoted to tuple automatically: <code>pl.pallas_call(kernel, grid=4, out_shape=...)</code></p>
+</li>
+<li><p>grid is a logical concept. it does <strong>NOT</strong> directly ****maps to physical hardware (like GPU blocks or TPU cores). it’s up to the backend to do the specific mapping</p>
+</li>
+<li><p><strong>GridSpec</strong>: pack grid, in_specs. out_specs and scratch_shapes</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">spec = pl.GridSpec(<br>    grid=(<span class="hljs-number">4</span>, <span class="hljs-number">4</span>),<br>    <span class="hljs-comment"># one BlockSpec for the single input</span><br>    in_specs=pl.BlockSpec((<span class="hljs-number">128</span>, <span class="hljs-number">64</span>), <span class="hljs-keyword">lambda</span> i, j: (i, j)),<br>    out_specs=pl.BlockSpec((<span class="hljs-number">128</span>, <span class="hljs-number">64</span>), <span class="hljs-keyword">lambda</span> i, j: (i, j)),<br>    <span class="hljs-comment"># temp buffer in TPU</span><br>    scratch_shapes=[pltpu.VMEM((<span class="hljs-number">128</span>, <span class="hljs-number">64</span>), jnp.float32)]<br>)<br><br>result = pl.pallas_call(kernel, grid_spec=spec, out_shape=...)(x)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>dynamic grid: some dimesions can be determined at run time</p>
+<ul>
+<li>in such cases, we can retrive dimension length by <code>num_programs(axis)</code></li>
+<li>Triton and Mosaic GPU doesn’t support this</li>
+<li>Mosaic TPU supports this in certain cases</li>
+</ul>
+</li>
+</ul>
+<h1 id="7-BlockSpec-tile-mapping"><a href="#7-BlockSpec-tile-mapping" class="headerlink" title="7. BlockSpec: tile mapping"></a><strong>7. BlockSpec: tile mapping</strong></h1><p>for each program, what’s its input and output?</p>
+<p>BlockSpec maps program_id to tile positions</p>
+<p>key fields of BlockSpec</p>
+<ul>
+<li><code>block_shape</code>: the tile shape that each program sees</li>
+<li><code>index_map</code>: a function. input is program id, output is block indices</li>
+<li><code>memory_space</code>: where the tile is in the memory (related to backend)</li>
+<li><code>pipeline_mode</code>: used to optimize pipelining</li>
+</ul>
+<p>assume we have a (512, 256) matrix, and we want to tile it to (128, 64) chunks</p>
+<p>the corresponding BlockSpec is</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">pl.BlockSpec(<br>    block_shape=(<span class="hljs-number">128</span>, <span class="hljs-number">64</span>),<br>    index_map=<span class="hljs-keyword">lambda</span> i, j: (i, j) <span class="hljs-comment"># program_id to block indices</span><br>)<br></code></pre></td></tr></table></figure>
+
+<p>block indices → tile position. for example, when (i, j) is (2, 3)</p>
+<ul>
+<li>tile start is (2<em>128, 3</em>64) &#x3D; (256, 192)</li>
+<li>tile end is (3<em>128, 4</em>64) &#x3D; (384, 256)</li>
+<li>tile range is [256:384, 192:256]</li>
+</ul>
+<p><code>None</code> in block_shape</p>
+<ul>
+<li>it means: this dimension is 1, and we squeeze (remove) the dimension</li>
+<li><code>block_shape=(None,64)</code>: kernel sees shape <code>(64,)</code>, not <code>(1,64)</code></li>
+<li>useful when processing row-by-row or column-by-column</li>
+</ul>
+<p>default values</p>
+<ul>
+<li>the default <code>index_map</code> returns <code>0</code>s as block indices</li>
+<li>the default <code>block_shape</code> returns the full shape with no tiling</li>
+</ul>
+<h1 id="8-pallas-call"><a href="#8-pallas-call" class="headerlink" title="8. pallas_call"></a>8. <code>pallas_call</code></h1><ul>
+<li>input: kernel and its config</li>
+<li>output: a callable kernel</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python">callable_kernel = pl.pallas_call(<br>    kernel,<br>    grid=...,<br>    in_specs=...,<br>    out_specs=...,<br>    out_shape=...,<br>    ...<br>)<br>result = callable_kernel(x, y, ...)<br></code></pre></td></tr></table></figure>
+
+<p>some other params</p>
+<ul>
+<li><code>interpret=True</code>: simulate in CPU for debuging</li>
+<li><code>backend</code>: <code>triton</code>, <code>mosaic_gpu</code>, <code>mosaic_tpu</code></li>
+<li><code>compiler_params</code></li>
+<li><code>input_output_aliases</code>: a specific output should reuse the memory space already allocated for a specific input</li>
+</ul>
+<h1 id="9-example-vector-add"><a href="#9-example-vector-add" class="headerlink" title="9. example: vector add"></a>9. example: vector add</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> jax<br><span class="hljs-keyword">import</span> jax.numpy <span class="hljs-keyword">as</span> jnp<br><span class="hljs-keyword">import</span> jax.experimental.pallas <span class="hljs-keyword">as</span> pl<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">add_kernel</span>(<span class="hljs-params">x_ref, y_ref, o_ref</span>):<br>    x = x_ref[...]<br>    y = y_ref[...]<br>    result = x + y<br>    o_ref[...] = result<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">add_vectors</span>(<span class="hljs-params">x, y</span>):<br>    block_size = <span class="hljs-number">128</span><br>    n = x.shape[<span class="hljs-number">0</span>]<br>    grid_size = (n + block_size - <span class="hljs-number">1</span>) // block_size  <span class="hljs-comment"># ceiling</span><br><br>    <span class="hljs-keyword">return</span> pl.pallas_call(<br>        add_kernel,<br>        grid=(grid_size,),<br>        in_specs=(<br>            pl.BlockSpec((block_size,), <span class="hljs-keyword">lambda</span> i: (i,)), <span class="hljs-comment"># for x</span><br>            pl.BlockSpec((block_size,), <span class="hljs-keyword">lambda</span> i: (i,)), <span class="hljs-comment"># for y</span><br>        ),<br>        out_specs=pl.BlockSpec((block_size,), <span class="hljs-keyword">lambda</span> i: (i,)),<br>        out_shape=jax.ShapeDtypeStruct(x.shape, x.dtype)<br>    )(x, y)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>kernel params order: input Ref, output Ref, scratch Ref</li>
+<li><code>in_specs</code>: one BlockSpec for each input. If no tiling for an input, use <code>None</code> for it.</li>
+<li><code>out_shape</code>: the shape and type of the output</li>
+</ul>
+<h1 id="10-scratch-and-temp-buffer"><a href="#10-scratch-and-temp-buffer" class="headerlink" title="10. scratch and temp buffer"></a><strong>10. scratch and temp buffer</strong></h1><ul>
+<li>specify <code>scratch_shapes</code>  for some temp Ref</li>
+<li>these temp Ref are not input&#x2F;outp</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">result = pl.pallas_call(<br>    kernel,<br>    grid=(<span class="hljs-number">4</span>,),<br>    in_specs=[...],<br>    out_specs=...,<br>    out_shape=...,<br>    scratch_shapes=[pltpu.VMEM((<span class="hljs-number">128</span>,), jnp.float32)]  <span class="hljs-comment"># a temp buffer</span><br>)(x)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>we can read&#x2F;write scratch_ref, but they won’t be outputs</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref, scratch_ref</span>):<br>    scratch_ref[...] = x_ref[...] * <span class="hljs-number">2</span><br>    o_ref[...] = scratch_ref[...] + <span class="hljs-number">1</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>scratch type is dependant on backends</li>
+<li>TPU: <code>pltpu.VMEM</code> and <code>pltpu.SMEM</code><ul>
+<li>VMEM: used for VPU in TensorCore. 128MiB per TensorCore.</li>
+<li>SMEM: for scalar core within the TensorCore. Storing scalar values, addresses, and control flow related data.</li>
+</ul>
+</li>
+<li>GPU: <code>plgpu.SMEM</code></li>
+<li>Triton: not supported</li>
+</ul>
+<p><code>pl.run_scoped</code>: allocate scratch inside the kernel</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">body</span>(<span class="hljs-params">temp_ref</span>):<br>        temp_ref[...] = x_ref[...] * <span class="hljs-number">2</span><br>        o_ref[...] = temp_ref[...] + <span class="hljs-number">1</span><br>    pl.run_scoped(body, pltpu.VMEM((<span class="hljs-number">128</span>,), jnp.float32))<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>temp_ref</code> only exist within <code>body</code></li>
+<li>easier to manage life cycles of temp Ref in this way</li>
+</ul>
+<h1 id="11-control-flow"><a href="#11-control-flow" class="headerlink" title="11. control flow"></a>11. control flow</h1><p>kernel control flow primitive: <code>pl.when</code> and <code>pl.loop</code></p>
+<ul>
+<li>normal Python <code>if</code> and <code>for</code> will be excuted during tracing</li>
+<li><code>pl.when</code> and <code>pl.loop</code>: convert to JAX IR node during tracing</li>
+</ul>
+<p><code>pl.when</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br><span class="hljs-meta">    @pl.when(<span class="hljs-params">pl.program_id(<span class="hljs-params"><span class="hljs-number">0</span></span>) == <span class="hljs-number">0</span></span>)</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_</span>():<br>        <span class="hljs-comment"># only init at the 1st program</span><br>        o_ref[...] = jnp.zeros((<span class="hljs-number">128</span>,), dtype=jnp.float32) <br></code></pre></td></tr></table></figure>
+
+<p><code>pl.loop</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">kernel</span>(<span class="hljs-params">x_ref, o_ref</span>):<br>    acc = jnp.zeros((<span class="hljs-number">64</span>,), dtype=jnp.float32)<br>    <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">body</span>(<span class="hljs-params">i, acc</span>):<br>        <span class="hljs-keyword">return</span> acc + x_ref[i, :]<br>    <br>    result = jax.lax.fori_loop(<span class="hljs-number">0</span>, <span class="hljs-number">4</span>, body, acc)<br>    o_ref[...] = result<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>both <code>pl.loop</code> and <code>lax.fori_loop</code> can be used for kernel loop</li>
+<li>Python <code>for</code> will be unrolled during tracing (preferred for static and samll loops)</li>
+<li><code>lax.fori_loop</code> &#x2F; <code>pl.loop</code>: generate loop node in IR during tracing</li>
+</ul>
+<h1 id="12-boundary-check"><a href="#12-boundary-check" class="headerlink" title="12. boundary check"></a>12. boundary check</h1><ul>
+<li>example: array length &#x3D; 500, block size &#x3D; 128</li>
+<li>the last block will be padded with undefined values (we cannot assume the values in the padding)</li>
+<li>in a block, there must be at least one element within the boundary</li>
+</ul>
+<h1 id="13-compilation"><a href="#13-compilation" class="headerlink" title="13. compilation"></a>13. compilation</h1><p><strong>stage 1: Python &#x2F; JAX</strong></p>
+<ul>
+<li>tracing: kernel → stateful jaxpr (JAX’s internal IR)<ul>
+<li>why stateful? because it has side effects realted to Ref</li>
+</ul>
+</li>
+<li>configs like <code>grid</code> and <code>BlockSpec</code> are converted to <code>GridMapping</code> and <code>BlockMapping</code></li>
+</ul>
+<p><strong>stage 2: backend-specific lowering</strong></p>
+<ul>
+<li>jaxpr + grid_mapping are converted to backend IR<ul>
+<li>GPU Triton: Triton MLIR</li>
+<li>GPU Mosaic: stable_mosaic_gpu MLIR</li>
+<li>TPU Mosaic: stable_mosaic MLIR</li>
+</ul>
+</li>
+<li>these IRs will be serialized to bytecode, and be embedded into XLA custom call</li>
+</ul>
+<p><strong>stage 3: jaxlib&#x2F;XLA</strong></p>
+<ul>
+<li>compile to device code</li>
+<li>Triton: handled by XLA’s Triton compiler</li>
+<li>Mosaic GPU: to PTX (by jaxlib MLIR pipeline), then cubin (by PTXAS)</li>
+<li>Mosaic TPU: handled by TPU compiler</li>
+</ul>
+<p><strong>TPU Mosaic backend</strong></p>
+<p>jaxpr → stable_mosaic MLIR → custom call tpu_custom_call → TPU compiler</p>
+<p>output: TPU executable</p>
+<p><strong>Source blog: <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/tOdbeq9NJSCpHx_tc7GriQ">Pallas：JAX 中有意思的多后端 Kernel 抽象</a></strong></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/JAX/" class="print-no-link">#JAX</a>
+      
+        <a href="/tags/TPU/" class="print-no-link">#TPU</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Pallas 101 - multi-backend kernel for JAX</div>
+      <div>https://gdymind.github.io/2026/02/19/Pallas-101/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>February 19, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/02/07/5D-parallelism-in-LLM-training/" title="5D parallelism in LLM training">
+                        <span class="hidden-mobile">5D parallelism in LLM training</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2026/02/19/Pallas-101/';
+          this.page.identifier = '/2026/02/19/Pallas-101/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        visited 
+        <span id="busuanzi_value_site_pv"></span>
+         times
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        unique visitors: 
+        <span id="busuanzi_value_site_uv"></span>
+        
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
