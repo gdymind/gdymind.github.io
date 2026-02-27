@@ -19,21 +19,18 @@
   <meta name="author" content="gdymind">
   <meta name="keywords" content="">
   
-    <meta name="description" content="https:&#x2F;&#x2F;openxla.org&#x2F;xla 0. IntroXLA in the whole JAX stack  Source: Yi Wang’s linkedin post  LLM is basically matmul. XLA (Accelerated Linear Algebra) optimizes linear algebra on multiple decives (TPU">
+    <meta name="description" content="https:&#x2F;&#x2F;openxla.org&#x2F;xla&#x2F;shapes https:&#x2F;&#x2F;openxla.org&#x2F;xla&#x2F;tiled_layout 1. XLA op formatHLO example 12add.936 &#x3D; bf16[8,1,1280,16384]&#123;3,2,0,1:T(8,128)(2,1)&#125;          add(exponential.183, broadcas">
 <meta property="og:type" content="article">
-<meta property="og:title" content="XLA01 - architecture &amp; workflows">
-<meta property="og:url" content="https://gdymind.github.io/2026/02/25/XLA01-architecture-workflows/index.html">
+<meta property="og:title" content="XLA02 - shapes, layout &amp; tiling">
+<meta property="og:url" content="https://gdymind.github.io/2026/02/26/XLA02-shapes-layout-tiling/index.html">
 <meta property="og:site_name" content="gdymind&#39;s Blog">
-<meta property="og:description" content="https:&#x2F;&#x2F;openxla.org&#x2F;xla 0. IntroXLA in the whole JAX stack  Source: Yi Wang’s linkedin post  LLM is basically matmul. XLA (Accelerated Linear Algebra) optimizes linear algebra on multiple decives (TPU">
+<meta property="og:description" content="https:&#x2F;&#x2F;openxla.org&#x2F;xla&#x2F;shapes https:&#x2F;&#x2F;openxla.org&#x2F;xla&#x2F;tiled_layout 1. XLA op formatHLO example 12add.936 &#x3D; bf16[8,1,1280,16384]&#123;3,2,0,1:T(8,128)(2,1)&#125;          add(exponential.183, broadcas">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/ddef3922-e61d-44dc-bed4-b5f80f8bf924.png">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/image.png">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/image%201.png">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/image%202.png">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/ee2e7358-58a3-49bd-9368-b959ba09d340.png">
-<meta property="og:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/image%203.png">
-<meta property="article:published_time" content="2026-02-25T10:29:02.000Z">
-<meta property="article:modified_time" content="2026-02-25T10:30:14.261Z">
+<meta property="og:image" content="https://gdymind.github.io/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image%201.png">
+<meta property="og:image" content="https://gdymind.github.io/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image%202.png">
+<meta property="article:published_time" content="2026-02-27T06:35:09.000Z">
+<meta property="article:modified_time" content="2026-02-27T06:36:16.275Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="JAX">
 <meta property="article:tag" content="TPU">
@@ -41,13 +38,13 @@
 <meta property="article:tag" content="Pallas">
 <meta property="article:tag" content="Kernel">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://gdymind.github.io/img/XLA01%20-%20architecture%20&%20workflows/ddef3922-e61d-44dc-bed4-b5f80f8bf924.png">
+<meta name="twitter:image" content="https://gdymind.github.io/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
   
   
-  <title>XLA01 - architecture &amp; workflows - gdymind&#39;s Blog</title>
+  <title>XLA02 - shapes, layout &amp; tiling - gdymind&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -217,7 +214,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="XLA01 - architecture &amp; workflows"></span>
+            <span id="subtitle" data-typed-text="XLA02 - shapes, layout &amp; tiling"></span>
           
         </div>
 
@@ -228,8 +225,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-02-25 02:29" pubdate>
-          February 25, 2026 am
+        <time datetime="2026-02-26 22:35" pubdate>
+          February 26, 2026 pm
         </time>
       </span>
     
@@ -240,7 +237,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          235 words
+          424 words
         
       </span>
     
@@ -251,7 +248,7 @@
         
         
         
-          2 mins
+          4 mins
         
       </span>
     
@@ -288,194 +285,173 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">XLA01 - architecture &amp; workflows</h1>
+            <h1 id="seo-header">XLA02 - shapes, layout &amp; tiling</h1>
             
             
               <div class="markdown-body">
                 
-                <p><a target="_blank" rel="noopener" href="https://openxla.org/xla">https://openxla.org/xla</a></p>
-<h1 id="0-Intro"><a href="#0-Intro" class="headerlink" title="0. Intro"></a>0. Intro</h1><p>XLA in the whole JAX stack</p>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/ddef3922-e61d-44dc-bed4-b5f80f8bf924.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
-<p>Source: <a target="_blank" rel="noopener" href="https://www.linkedin.com/posts/yidewang_i-have-always-been-interested-in-explaining-activity-7393113379072094208-W7DV?utm_source=share&utm_medium=member_desktop&rcm=ACoAACRIW9ABACBpoI5NhAW374N0q8ynvZDSacI">Yi Wang’s linkedin post</a></p>
+                <p><a target="_blank" rel="noopener" href="https://openxla.org/xla/shapes">https://openxla.org/xla/shapes</a></p>
+<p><a target="_blank" rel="noopener" href="https://openxla.org/xla/tiled_layout">https://openxla.org/xla/tiled_layout</a></p>
+<h1 id="1-XLA-op-format"><a href="#1-XLA-op-format" class="headerlink" title="1. XLA op format"></a>1. XLA op format</h1><p>HLO example</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">add<span class="hljs-number">.936</span> = bf16[<span class="hljs-number">8</span>,<span class="hljs-number">1</span>,<span class="hljs-number">1280</span>,<span class="hljs-number">16384</span>]&#123;<span class="hljs-number">3</span>,<span class="hljs-number">2</span>,<span class="hljs-number">0</span>,<span class="hljs-number">1</span>:T(<span class="hljs-number">8</span>,<span class="hljs-number">128</span>)(<span class="hljs-number">2</span>,<span class="hljs-number">1</span>)&#125;<br>          add(exponential<span class="hljs-number">.183</span>, broadcast<span class="hljs-number">.3115</span>)<br></code></pre></td></tr></table></figure>
+
 <ul>
-<li>LLM is basically matmul. XLA (Accelerated Linear Algebra) optimizes linear algebra on multiple decives (TPU &#x2F; GPU)<ul>
-<li>XLA works with n-d arrays of the same data type</li>
+<li><strong>op name</strong>: <code>add.936</code>: unique name for an op</li>
+<li><strong>output shape</strong>: <code>bf16[8,1,1280,16384]</code>: output shape with dtype&#x3D;bf16</li>
+<li><strong>layout w&#x2F; tiling</strong>: <code>3,2,0,1:T(8,128)(2,1)</code><ul>
+<li>how the array is stored in memory</li>
+<li>layout is optional</li>
+<li>****<code>3,2,0,1</code>: minor-to-major dimension ordering. most minor means the fastest-varying one</li>
+<li><code>T(8,128)</code>: tiling. tiled in 8×128 blocks</li>
+<li><code>(2,1)</code>: sub-tiling. two bf16 (2B elements) are packed together as 32bits. see below for details</li>
 </ul>
 </li>
-<li>XLA compiler: model code (PyTorch, JAX, Tensorflow) → optimized machine instructions on GPU &#x2F; TPU &#x2F; CPU, etc.</li>
-<li>XLA uses MLIR (Multi-Level Intermediate Representation) to build a single compiler toolchain<ul>
-<li>MLIR is a hybrid IR infra that allows users to define “dialects” of opes at varying degrees of abstraction and gradually lower between these opsets</li>
-<li>MLIR performs transformations at each level of granularity</li>
-<li>StableHLO and CHLO are two examples of MLIR dialects.</li>
-</ul>
-</li>
-<li>Example of XLA ops: Add &#x2F; Abs &#x2F; AllToAll &#x2F; AllReduce &#x2F; CollectivePermute &#x2F; Sort …</li>
-</ul>
-<h1 id="1-XLA-input-StableHLO"><a href="#1-XLA-input-StableHLO" class="headerlink" title="1. XLA input: StableHLO"></a>1. XLA input: StableHLO</h1><ul>
-<li>model graphs is defined in <a target="_blank" rel="noopener" href="https://github.com/openxla/stablehlo">StableHLO</a>, which is XLA’s input</li>
-<li>HLO &#x3D; high level operations<ul>
-<li>an internal graph representation (IR) for the XLA compiler</li>
-<li>“internal dialect” used by the XLA compiler to perform optimizations</li>
-<li>not designed to be stable. may change frequently</li>
-</ul>
-</li>
-<li>StableHLO &#x3D; public-interface HLO<ul>
-<li>a portability layer or “bridge” between ML frameworks (JAX &#x2F; PyTorch) and the compiler</li>
-<li>ML frameworks that produce StableHLO programs are compatible with ML compilers that consume StableHLO programs</li>
-<li>versioned op set of HLOs → model graphs remain valid even as the underlying compiler evolves</li>
-<li>provide backward and forward compatibility</li>
+<li><strong>operation</strong>: <code>add()</code></li>
+<li><strong>args</strong>: <code>exponential.183</code>, <code>broadcast.3115</code><ul>
+<li>this op takes two args, specified with their unique names</li>
+<li>from the names, they were from previous <code>exponential</code> and <code>broadcast</code> ops.</li>
 </ul>
 </li>
 </ul>
-<h1 id="2-XLA-workflows"><a href="#2-XLA-workflows" class="headerlink" title="2. XLA workflows"></a>2. XLA workflows</h1><ol>
-<li><strong>StableHLO → internal HLO dialect</strong>: target-independent optimization on StableHLO. examples<ol>
-<li>common subexpression elimination</li>
-<li>target-independent op fusion</li>
-<li>buffer analysis: allocate runtime memory</li>
+<p>another HLO example</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">%fusion<span class="hljs-number">.3</span> = bf16[<span class="hljs-number">32</span>,<span class="hljs-number">32</span>,<span class="hljs-number">4096</span>]&#123;<span class="hljs-number">2</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>:T(<span class="hljs-number">8</span>,<span class="hljs-number">128</span>)(<span class="hljs-number">2</span>,<span class="hljs-number">1</span>)S(<span class="hljs-number">1</span>)&#125;<br>            fusion(bf16[<span class="hljs-number">32</span>,<span class="hljs-number">32</span>,<span class="hljs-number">8192</span>]&#123;<span class="hljs-number">2</span>,<span class="hljs-number">1</span>,<span class="hljs-number">0</span>:T(<span class="hljs-number">8</span>,<span class="hljs-number">128</span>)(<span class="hljs-number">2</span>,<span class="hljs-number">1</span>)S(<span class="hljs-number">1</span>)&#125; %fusion<span class="hljs-number">.32</span>),<br>            kind=kCustom, calls=%<span class="hljs-built_in">all</span>-reduce-scatter<span class="hljs-number">.3</span><br></code></pre></td></tr></table></figure>
+
+<p>we can see more fields:</p>
+<ul>
+<li><strong>attributes</strong>: <code>kind</code> and <code>calls</code>: speficy more info about the op (in this example, <code>fusion()</code>)</li>
+<li><strong>memory location</strong>: <code>S(1)</code> means VMEM in TPU</li>
+<li><strong>shape and layout for input arg</strong> <code>%fusion.32</code></li>
+</ul>
+<h1 id="2-HLO-module"><a href="#2-HLO-module" class="headerlink" title="2. HLO module"></a>2. HLO module</h1><ul>
+<li><strong>HLO Module</strong>: the top-level container in XLA’s IR hierarchy</li>
+<li>represents an entire computation (e.g., a full neural network forward pass or a compiled TensorFlow&#x2F;JAX function)</li>
+<li>contains everything needed to compile and execute that computation.</li>
+</ul>
+<h3 id="Hierarchy"><a href="#Hierarchy" class="headerlink" title="Hierarchy"></a>Hierarchy</h3><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs stata">HloModule<br>  └── HloComputation (<span class="hljs-keyword">one</span> or <span class="hljs-keyword">more</span>)<br>        └── HloInstruction (<span class="hljs-keyword">one</span> or <span class="hljs-keyword">more</span>)<br>              └── Operands, shape, opcode, attributes...<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>HloModule</strong> — the root container; has a name, config, and a set of computations.</li>
+<li><strong>HloComputation</strong> — analogous to a function. Every module has one <strong>entry computation</strong> (the “main” function) and may have embedded computations (e.g., for <code>map</code>, <code>reduce</code>, <code>while</code> loop bodies, conditionals).</li>
+<li><strong>HloInstruction</strong> — a single operation (e.g., <code>add</code>, <code>dot</code>, <code>convolution</code>, <code>reshape</code>, <code>broadcast</code>). Each instruction has a shape (type + dimensions), opcode, and pointers to its operand instructions.</li>
+</ul>
+<h1 id="3-shapes"><a href="#3-shapes" class="headerlink" title="3. shapes"></a>3. shapes</h1><ul>
+<li>XLA <code>ShapeProto</code> proto describes # of dimensions, size, and data type of an N-d array</li>
+<li><em><strong>true</strong></em> number of dimensions: # of dimensions whose size &gt; 1</li>
+<li>dimensions are numbers 0 to N-1 from left to right. size 0 is valid</li>
+<li>layout is defined in <code>LayoutProto</code> proto</li>
+<li>2d, 3d, 4d arrays often has specific dimension names<ul>
+<li>2d: dimesion <code>y</code>, <code>x</code></li>
+<li>3d: <code>z</code>, <code>y</code>, <code>x</code></li>
+<li>4d: <code>p</code>, <code>z</code>, <code>y</code>, <code>x</code></li>
+</ul>
+</li>
+</ul>
+<h1 id="4-layout"><a href="#4-layout" class="headerlink" title="4. layout"></a>4. layout</h1><h2 id="4-1-minor-to-major-odering"><a href="#4-1-minor-to-major-odering" class="headerlink" title="4.1 minor-to-major odering"></a>4.1 minor-to-major odering</h2><p><code>LayoutProto</code>: how array is represented in mem</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs protobuf"><span class="hljs-keyword">message </span><span class="hljs-title class_">LayoutProto</span> &#123;<br>  <span class="hljs-keyword">repeated</span> <span class="hljs-type">int64</span> minor_to_major;<br>  <span class="hljs-type">int64</span> tail_padding_alignment_in_elements;<br>  ...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>minor_to_major</code>: the minor-to-major ordering of the dimensions within a shape. it’s an ordering of the dimensions</li>
+</ul>
+<p>example: 2d array of size [2x3] → dimension 0 size &#x3D; 2, dimension 1 size &#x3D; 3</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs css"><span class="hljs-selector-tag">a</span> <span class="hljs-selector-tag">b</span> c<br>d e f<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>if <code>minor_to_major</code> is <code>[0, 1]</code>, in memory, the layout is <code>a d b e c f</code> (dimension0 changes first)</li>
+<li>if <code>minor_to_major</code> is <code>[1, 0]</code>, in memory, the layout is <code>a b c d e f</code> (dimension1 changes first)</li>
+<li>layout is <code>[0, 1, 2, … , N-1]</code>: “column-major” style</li>
+<li>layout is <code>[N-1, N-2, ..., 1, 0]</code>: “row-major” style</li>
+</ul>
+<h2 id="4-2-padding"><a href="#4-2-padding" class="headerlink" title="4.2 padding"></a>4.2 padding</h2><ul>
+<li><code>tail_padding_alignment_in_elements</code>: defines the alignment of the tiled array (regarding # of elements)</li>
+<li>after tiling, padded elements will be appended until # of elements is a multiple of <code>tail_padding_alignment_in_elements</code></li>
+</ul>
+<h2 id="4-3-indexing-into-array"><a href="#4-3-indexing-into-array" class="headerlink" title="4.3 indexing into array"></a>4.3 indexing into array</h2><ul>
+<li>class <code>IndexUtil</code><ul>
+<li>given shape + layout</li>
+<li>convert an n-d index (like row and column) into a linear index (a single linear address in memory)</li>
+</ul>
+</li>
+</ul>
+<p>example</p>
+<ul>
+<li>shape &#x3D; [2, 3], layout &#x3D; [1, 0] (row major)</li>
+<li>n-d index: row 1, column 2</li>
+<li>linear index: 1*2 + 2 &#x3D; 5</li>
+<li>underlying memory: [0,0], [0,1], [0,2], [1,0], [1,1], <strong>[1,2]</strong></li>
+</ul>
+<h1 id="5-memory-space-identifiers"><a href="#5-memory-space-identifiers" class="headerlink" title="5. memory space identifiers"></a>5. memory space identifiers</h1><ul>
+<li>use <code>S(n)</code> for memory location</li>
+<li><code>S(0)</code> (often omitted): HBM</li>
+<li><code>S(1)</code>: VMEM</li>
+<li><code>S(2)</code>, <code>S(3)</code>, etc., correspond to additional device specific memory spaces</li>
+<li><code>S(5)</code> indicates host memory</li>
+</ul>
+<h1 id="6-tiled-format"><a href="#6-tiled-format" class="headerlink" title="6. tiled format"></a>6. tiled format</h1><ul>
+<li>why tiled format in XLA TPU? → vector registers are 2D</li>
+<li>tiled format: breaks down a shape into 1D or 2D tiles</li>
+<li>different tiles are placed in row-major in memory</li>
+<li>withtin one tile, elements are also row-major</li>
+</ul>
+<p>exmaple: array <code>F32[3,5]</code> with 2x2 tiling</p>
+<p><img src="/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>written as <code>&#123;1,0:T(2,2)&#125;</code></li>
+</ul>
+<h1 id="7-repeated-tiling"><a href="#7-repeated-tiling" class="headerlink" title="7. repeated tiling"></a>7. repeated tiling</h1><p>example: array with size 4x8 is tiled by two levels of tiling (first 2x4 then 2x1)</p>
+<p><img src="/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>tiling spec: <code>(2,4)(2,1)</code></li>
+<li>each color is a 2x4 tile</li>
+<li>each red bos is a 2x1 tile</li>
+<li>numbers are the order in linear memory</li>
+</ul>
+<h1 id="8-combining-dimensions-using-tiles"><a href="#8-combining-dimensions-using-tiles" class="headerlink" title="8. combining dimensions using tiles"></a>8. combining dimensions using tiles</h1><ul>
+<li>tiling supports combining dimensions</li>
+<li>example: <code>F32[2,7,8,11,10]&#123;4,3,2,1,0&#125;</code> can be combined into <code>F32[112,110]&#123;1,0&#125;</code> first before tiling it with <code>(2,3)</code></li>
+<li>how? → we can specify tiling as  <code>(∗,∗,2,∗,3)</code></li>
+<li><code>*</code> means combine this dimension to the next more minor dimension</li>
+</ul>
+<h1 id="9-popular-XLA-tiling-formats"><a href="#9-popular-XLA-tiling-formats" class="headerlink" title="9. popular XLA tiling formats"></a>9. popular XLA tiling formats</h1><ol>
+<li><strong>Untiled format:</strong> most arrays not on the TPU are untiled</li>
+<li><strong>TPU tile format</strong><ol>
+<li>the most common format in XLA&#x2F;TPU is tiling by <strong><code>8x128</code></strong></li>
+<li>it matches the 32-bit <strong><code>8x128</code></strong> vector registers on a TPU.</li>
 </ol>
 </li>
-<li><strong>HLO sent to backend</strong>: target-specific optimization<ol>
-<li>example: GPU may optimize op fusion for CUDA streams</li>
+<li><strong>TPU small tile format</strong> (a.k.a. “Compact 2nd Minor Layout”) <ol>
+<li>when the 2nd most minor dimension size is 1 or 2, XLA&#x2F;TPU instead tiles by <strong><code>2x128</code></strong> <ol>
+<li>pupose: save memory since a <strong><code>2x128</code></strong> tile is smaller than an <strong><code>8x128</code></strong> tile</li>
 </ol>
 </li>
-<li><strong>Target-specific code generation</strong>: done by backend</li>
-</ol>
-<h1 id="3-HLO-to-excutable-GPU"><a href="#3-HLO-to-excutable-GPU" class="headerlink" title="3. HLO to excutable (GPU)"></a>3. HLO to excutable (GPU)</h1><ul>
-<li>The journey from initial HLO all the way to machine executable</li>
-<li>Depends on the context, HLO can refer to “HLO modules”</li>
-<li>Thunk: a self-contained unit of work that the runtime executes</li>
-<li>LLVM:  compiler backend, and a language that it takes as an input<ul>
-<li>many compilers generate LLVM code as a first step, and then LLVM generates machine code from it</li>
-<li>allows reusing code that is similar in different compilers</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
-<h2 id="3-1-Pre-optimization-HLO"><a href="#3-1-Pre-optimization-HLO" class="headerlink" title="3.1 Pre-optimization HLO"></a>3.1 Pre-optimization HLO</h2><ul>
-<li><strong>Pre-optimization HLO</strong>: no interal XLA ops (like <code>fusion</code> and <code>bitcast</code>) included</li>
-<li>Ops don’t have a layout at this stage. Or if they do, it will be ignored</li>
-<li>produced by JAX &#x2F; pytorch</li>
-<li>use <code>-xla_dump_to</code> XLA flag to dump Pre-optimization HLO to a file ended with <code>before_optimizations.txt</code></li>
-</ul>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
-<h2 id="3-2-optimize-HLO-Module"><a href="#3-2-optimize-HLO-Module" class="headerlink" title="3.2 optimize HLO Module"></a>3.2 optimize HLO Module</h2><p>XLA GPU vs TPU pipeline </p>
-<table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>XLA:GPU Pipeline</th>
-<th>XLA:TPU Pipeline</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Lowering Target</td>
-<td>Thunks &amp; LLVM IR</td>
-<td>TPU-specific Machine Code (Binary)</td>
-</tr>
-<tr>
-<td>Code Generation</td>
-<td>IrEmitterUnnested + LLVM (PTX&#x2F;HSACO)</td>
-<td>Proprietary TPU Compiler Backend</td>
-</tr>
-<tr>
-<td>Runtime Abstraction</td>
-<td>ThunkSequence</td>
-<td>TpuExecutable (often via PJRT)</td>
-</tr>
-<tr>
-<td>Optimization Focus</td>
-<td>Kernel fusion, memory coalescing</td>
-<td>Systolic array utilization, interconnect scaling</td>
-</tr>
-</tbody></table>
-<p>here we only introcuces XLA:<strong>GPU</strong> pipeline</p>
-<p>pre-optimization HLO → optimized HLO is done by serveral passes</p>
-<p>passes execution orders:</p>
-<ol>
-<li><strong>sharding</strong> related passes: some passes uses <a target="_blank" rel="noopener" href="https://openxla.org/shardy/overview">Shardy</a></li>
-<li><strong>optimization</strong> passes: legalization and simplification passes</li>
-<li><strong>collective</strong> optimization passes: similar to step2, but for collective ops</li>
-<li><strong>layout assignment</strong> passes: each HLO op has a layout like <code>f32[10,20,30]&#123;2,0,1&#125;</code> → control how tensor is sotored in memory<ol>
-<li>layout format: element type, logical dimensions of the shape,  layout permutation in minor to major order</li>
-<li>goal:  minimize # physical transpositions</li>
-<li>propagate layouts “down” and “up” the graph (w&#x2F; certain constraints)</li>
-<li>may have conflicting layouts (one from an operand, one from a user)</li>
-<li><code>copy</code> will be added for conflicting layouts</li>
+<li>when the wnd most minor dimension size is 3 or 4, XLA&#x2F;TPU tiles by <strong><code>4x128</code></strong>.</li>
 </ol>
 </li>
-<li><strong>layout normalization</strong> passes<ol>
-<li>try to rewrite shape to default layout <code>&#123;rank-1, rank-2, …, 0&#125;</code></li>
-<li><code>copy</code> (that changes layout) is rewritten as <code>transpose</code> + <code>bitcast</code><ol>
-<li>bitcast: a transpose with a layout that makes it a no-op physically</li>
+<li><strong>TPU 16 bit tile format</strong> <ol>
+<li><p>when array element type is BF16, the tiles we use are typically (8,128)(2,1)</p>
+</li>
+<li><p>the sub-tiling does “BF16 packing”</p>
+<p> <img src="/img/XLA02%20-%20shapes,%20layout%20&%20tiles/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+</li>
+<li><p>one element from an even row and one element from an odd row are laid out together and put in one 32-bit element</p>
+</li>
+<li><p>used because TPUs work with 32 bit values natively and it is much more efficient to move data across the second most minor dimension than across the most minor dimension</p>
+</li>
+<li><p>so collecting two 16 bit values to get 32 bits from the same column is much more efficient than doing it in the more obvious fashion of taking two 16 bit values from the same row.</p>
+</li>
 </ol>
 </li>
-<li>some ops may still have non-default layouts, most notably <code>gather</code> and <code>dot</code></li>
+<li><strong>TPU 8 bit tile format</strong><ol>
+<li>similar to the 16 bit format,</li>
+<li>now we need to collect together 4 elements to get 32 bits </li>
+<li>so the tiling becomes <strong><code>(8,128)(4,1)</code></strong>.</li>
 </ol>
 </li>
-<li>post layout assignment optimization passes<ol>
-<li>Triton fusions (GEMM fusions + Softmax&#x2F;Layernorm fusions) or rewrites to library calls. </li>
-<li>autotuning: e.g., finds the best tiling for fusions</li>
-</ol>
-</li>
-<li><strong>fusion</strong> passes: <code>PriorityFusion</code> +  <code>Multi-Output</code> fusion<ol>
-<li>PriorityFusion: fusions guided by the cost model</li>
-<li>fusing ops&#x2F;fusions that share an operand</li>
-<li>common subexpression elimination</li>
-</ol>
-</li>
-<li>several <strong>post-fusion</strong> passes<ol>
-<li>turning them to async, or enforcing a certain relative order of collectives, ect.</li>
-<li>CopyInsertion: add copies to ensure that in-place ops don’t overwrite data needed elsewhere</li>
+<li><strong>TPU 1 bit tile format</strong> <ol>
+<li>TPUs currently use 1 byte for one boolean value</li>
+<li>it’s less wasteful to use a tiling by <strong><code>(32,128)(32,1)</code></strong> and use only 1 bit per element</li>
 </ol>
 </li>
 </ol>
-<p>if adding <code>-xla_dump_to</code> XLA flag, you’ll see a file ended with <code>after_optimizations.txt</code></p>
-<h2 id="3-3-scheduling"><a href="#3-3-scheduling" class="headerlink" title="3.3 scheduling"></a>3.3 s<strong>cheduling</strong></h2><ul>
-<li>for the HLO graph, any topological sort order is valid</li>
-<li>scheduling determines the actual orders</li>
-<li>goal: reduce peak memory given the tensor lifetime</li>
-</ul>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
-<h2 id="3-4-buffer-assignment"><a href="#3-4-buffer-assignment" class="headerlink" title="3.4 buffer assignment"></a>3.4 buffer assignment</h2><ul>
-<li>assign buffer slices to each instruction in the HLO graph</li>
-<li>this happens right before lowering to LLVM IR</li>
-</ul>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/ee2e7358-58a3-49bd-9368-b959ba09d340.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
-<h2 id="3-5-thunks"><a href="#3-5-thunks" class="headerlink" title="3.5 thunks"></a>3.5 thunks</h2><ul>
-<li>lower HLO graph to a seq of thunks for a specific backend (CPU or GPU)</li>
-<li>Thunk: self-contained executution unit<ul>
-<li>compiled kernel launch</li>
-<li>specific op</li>
-<li>library call</li>
-<li>control-flow construct</li>
-<li>collective communication</li>
-<li>…</li>
-</ul>
-</li>
-<li>thunk emission: scheduled HLO  → thunk sequence</li>
-<li>command buffers: optimizing GPU execution<ul>
-<li>CUDA graph: we can record a seq of GPUs ops (kernel launches, mem copies, etc) to reduce CPU overhead</li>
-<li>command buffer: abstraction of CUDA Graphs or HIP Graphs</li>
-</ul>
-</li>
-</ul>
-<h2 id="3-6-executable"><a href="#3-6-executable" class="headerlink" title="3.6 executable"></a>3.6 executable</h2><ul>
-<li>final product: bridge btw compiler and runtime</li>
-<li>includes all the info needed to run the compiled program on a target device (CPU &#x2F; GPU)</li>
-<li>modern runtimes like PJRT use slightly higher-level abstractions (see <a target="_blank" rel="noopener" href="https://github.com/openxla/xla/tree/main/xla/pjrt/pjrt_executable.h">PjRtExecutable</a>), but these ultimately wrap a backend-specific executable</li>
-<li>what’s included?<ul>
-<li>compiled code<ul>
-<li>CPU: object files</li>
-<li>GPU:  PTX or HSACO code</li>
-</ul>
-</li>
-<li>execution Plan (ThunkSequence)</li>
-<li>memory layout (BufferAssignment)</li>
-<li>(optional) final, optimized HLO Module: for debugging and profiling</li>
-</ul>
-</li>
-</ul>
-<p><img src="/img/XLA01%20-%20architecture%20&%20workflows/image%203.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
 
                 
               </div>
@@ -508,8 +484,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>XLA01 - architecture &amp; workflows</div>
-      <div>https://gdymind.github.io/2026/02/25/XLA01-architecture-workflows/</div>
+      <div>XLA02 - shapes, layout &amp; tiling</div>
+      <div>https://gdymind.github.io/2026/02/26/XLA02-shapes-layout-tiling/</div>
     </div>
     <div class="license-meta">
       
@@ -521,7 +497,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>Posted on</div>
-          <div>February 25, 2026</div>
+          <div>February 26, 2026</div>
         </div>
       
       
@@ -553,18 +529,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/02/26/XLA02-shapes-layout-tiling/" title="XLA02 - shapes, layout &amp; tiling">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">XLA02 - shapes, layout &amp; tiling</span>
-                        <span class="visible-mobile">Previous</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/02/22/Knowledge-Distillation-101/" title="Knowledge Distillation 101">
-                        <span class="hidden-mobile">Knowledge Distillation 101</span>
+                      <a href="/2026/02/25/XLA01-architecture-workflows/" title="XLA01 - architecture &amp; workflows">
+                        <span class="hidden-mobile">XLA01 - architecture &amp; workflows</span>
                         <span class="visible-mobile">Next</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -584,8 +554,8 @@
     
       <script type="text/javascript">
         var disqus_config = function() {
-          this.page.url = 'https://gdymind.github.io/2026/02/25/XLA01-architecture-workflows/';
-          this.page.identifier = '/2026/02/25/XLA01-architecture-workflows/';
+          this.page.url = 'https://gdymind.github.io/2026/02/26/XLA02-shapes-layout-tiling/';
+          this.page.identifier = '/2026/02/26/XLA02-shapes-layout-tiling/';
         };
         Fluid.utils.loadComments('#disqus_thread', function() {
           var d = document, s = d.createElement('script');
