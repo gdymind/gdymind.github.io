@@ -4,6 +4,27 @@
   
   
   <entry>
+    <title>KV cache in sliding-window attention</title>
+    <link href="/2026/03/02/sliding-window-attention/"/>
+    <url>/2026/03/02/sliding-window-attention/</url>
+    
+    <content type="html"><![CDATA[<h1 id="1-Longformer"><a href="#1-Longformer" class="headerlink" title="1. Longformer"></a>1. Longformer</h1><p><a href="https://arxiv.org/abs/2004.05150">https://arxiv.org/abs/2004.05150</a></p><ul><li>it was the 1st sliding-window attention (SWA) paper. published in 2020</li></ul><p><img src="/img/KV%20cache%20in%20sliding-window%20attention/image.png" alt="image.png"></p><ul><li><strong>traditional full attention</strong>: compute complexity $O(n^2)$, memory $O(n^2)$, where $n$ is seq len</li><li><strong>SWA</strong>: compute complexity $O(nw)$, memory $O(nw)$, where $w$ is window size</li><li><strong>receptive field</strong> of the top layer &#x3D; $lw$, where $l$ is # of layers</li><li><strong>activations</strong> are still $n\cdot d$ (where $d$ is the hidden dimension), but we only need to keep the last $w$ tokens’ KV cache (shape <code>wxd</code> for each K &#x2F; V)</li></ul><h1 id="2-Gemma2-local-global-hybrid-attention"><a href="#2-Gemma2-local-global-hybrid-attention" class="headerlink" title="2. Gemma2: local-global hybrid attention"></a><strong>2. Gemma2: local-global hybrid attention</strong></h1><p><a href="https://arxiv.org/abs/2408.00118">https://arxiv.org/abs/2408.00118</a></p><ul><li>Local sliding window and global attention<ul><li>alternate local and global in every other layer</li><li>local window size &#x3D; 4k; global context limit &#x3D; 8k</li></ul></li><li>Post-norm and pre-norm with RMSNorm</li><li>Logit soft-capping<ul><li>in each attention layer and the final layer</li><li>value of the logits stays between −soft_cap and +soft_cap</li></ul></li><li>Grouped-Query Attention</li></ul><p><strong>KV cahce in different phases</strong></p><table><thead><tr><th><strong>Phase</strong></th><th><strong>Global layer</strong></th><th><strong>Local layer</strong></th></tr></thead><tbody><tr><td><strong>Prefill</strong></td><td><strong>computed</strong>: all tokens (<code>nxd</code>); <strong>stored</strong>: all tokens (<code>nxd</code>)</td><td><strong>computed</strong>: all tokens (<code>nxd</code>); <strong>stored</strong>: last <code>w</code> tokens (<code>wxd</code>)</td></tr><tr><td><strong>Decode</strong></td><td><strong>computed</strong>: last token (<code>1xd</code>); <strong>stored</strong>: last token (<code>1xd</code>)</td><td><strong>computed</strong>: last token (<code>1xd</code>); <strong>stored</strong>: last token (<code>1xd</code>); <strong>removed</strong>: 1st token in the window (<code>1xd</code>). as a result, window size remains constant</td></tr></tbody></table>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>LLM inference</tag>
+      
+      <tag>KV cache</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>XLA02 - shapes, layout &amp; tiling</title>
     <link href="/2026/02/26/XLA02-shapes-layout-tiling/"/>
     <url>/2026/02/26/XLA02-shapes-layout-tiling/</url>
