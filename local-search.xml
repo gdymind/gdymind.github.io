@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>jax.jit, torch.compile &amp; CUDA graph</title>
+    <link href="/2026/03/07/jax-jit-torch-compile-CUDA-graph/"/>
+    <url>/2026/03/07/jax-jit-torch-compile-CUDA-graph/</url>
+    
+    <content type="html"><![CDATA[<h1 id="1-jax-jit"><a href="#1-jax-jit" class="headerlink" title="1. jax.jit"></a><strong>1. <code>jax.jit</code></strong></h1><p><img src="/img/jax%20jit,%20torch%20compile%20vs%20CUDA%20graph/01.png" alt="01.png"></p><ul><li><code>jax.jit</code> traces Python into <strong>computational graph</strong> (a jaxpr) → XLA compiles the graph into an <strong>optimized HLO program</strong> for the target device</li><li>After compilation, Python is completely out of the loop. There’s no interpreter overhead, no per-op dispatch.</li><li>XLA also does heavy optimization: operator fusion, memory layout planning, scheduling.</li><li>On TPU this is especially impactful because XLA is the <em>only</em> way to talk to the hardware. There’s no eager fallback that’s performant.</li></ul><h1 id="2-torch-compile"><a href="#2-torch-compile" class="headerlink" title="2.torch.compile"></a><strong>2.<code>torch.compile</code></strong></h1><p><img src="/img/jax%20jit,%20torch%20compile%20vs%20CUDA%20graph/02.png" alt="02.png"></p><ul><li><strong><code>torch.compile</code></strong>(with <code>torch.dynamo</code> + <code>torch.inductor</code>) is conceptually similar.</li><li>It traces a PyTorch function into a graph and compiles it, but the implementation is very different.</li><li>Dynamo captures at the Python bytecode level, handles graph breaks (falling back to eager when it can’t trace something), and the backend (Inductor for GPU) generates Triton kernels rather than going through XLA.</li><li>It’s more flexible but messier. It has to deal with PyTorch’s mutable tensor semantics, in-place ops, and dynamic control flow in ways JAX simply avoids by design.</li></ul><h1 id="3-CUDA-graphs"><a href="#3-CUDA-graphs" class="headerlink" title="3. CUDA graphs"></a><strong>3. CUDA graphs</strong></h1><p><img src="/img/jax%20jit,%20torch%20compile%20vs%20CUDA%20graph/c797fb0e-8d55-4a83-8833-38fa7eca0e1f.png" alt="Gemini_Generated_Image_l4k714l4k714l4k7.png"></p><ul><li>CUDA graphs are a much lower-level concept.</li><li>They record a sequence of already-compiled GPU kernel launches (with their exact memory addresses) and replay them.</li><li>There’s no operator fusion or optimization happening. You’re just eliminating CPU-side launch overhead.</li><li>Think of it as “record the driver calls and replay them.” It’s very restrictive (fixed memory addresses, no dynamic shapes, no CPU-dependent branching).</li></ul><h1 id="4-Summary"><a href="#4-Summary" class="headerlink" title="4. Summary"></a>4. Summary</h1><ul><li><code>jax.jit</code> &#x3D; tracing + full compiler optimization + dispatch elimination (all three)</li><li><code>torch.compile</code> &#x3D; tracing + compiler optimization + dispatch elimination (all three, but with graph breaks as an escape hatch)</li><li>CUDA graphs &#x3D; dispatch elimination only (no optimization, just replay)</li></ul>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>JAX</tag>
+      
+      <tag>TPU</tag>
+      
+      <tag>kernel</tag>
+      
+      <tag>GPU</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>KV cache in sliding-window attention</title>
     <link href="/2026/03/02/sliding-window-attention/"/>
     <url>/2026/03/02/sliding-window-attention/</url>
