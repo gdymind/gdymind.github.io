@@ -1,0 +1,1119 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="0. What is Omni-modality? Omni- is a Latin prefix meaning “all” or “every” Omnipotent: All-powerful Omniscient: All-knowing   OAI released GPT-4o (GPT-4 Omni), shifting from unimodal (text-only) to o">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vLLM-Omni deep dive">
+<meta property="og:url" content="https://gdymind.github.io/2026/04/04/vLLM-Omni-deep-dive/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="0. What is Omni-modality? Omni- is a Latin prefix meaning “all” or “every” Omnipotent: All-powerful Omniscient: All-knowing   OAI released GPT-4o (GPT-4 Omni), shifting from unimodal (text-only) to o">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%201.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%202.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%203.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%204.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%205.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%206.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%207.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%208.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%209.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%2010.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%2011.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/qwen3-omni_e2e_performance.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/qwen3-omni_ttfp_performance.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/qwen3-omni_rtf_performance.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/4be3bc52-9840-42dd-af76-254b08f5de86.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%2012.png">
+<meta property="article:published_time" content="2026-04-05T00:58:20.000Z">
+<meta property="article:modified_time" content="2026-04-05T01:01:58.979Z">
+<meta property="article:author" content="gdymind">
+<meta property="article:tag" content="LLM inference">
+<meta property="article:tag" content="vLLM">
+<meta property="article:tag" content="Omni">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>vLLM-Omni deep dive - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="vLLM-Omni deep dive"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-04-04 17:58" pubdate>
+          April 4, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          654 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">vLLM-Omni deep dive</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><img src="/img/vLLM-Omni%20deep%20dive/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="0-What-is-Omni-modality"><a href="#0-What-is-Omni-modality" class="headerlink" title="0. What is Omni-modality?"></a>0. What is Omni-modality?</h1><ul>
+<li><strong>Omni-</strong> is a Latin prefix meaning <strong>“all”</strong> or <strong>“every”</strong><ul>
+<li><strong>Omnipotent:</strong> All-powerful</li>
+<li><strong>Omniscient:</strong> All-knowing</li>
+</ul>
+</li>
+<li>OAI released GPT-4o (GPT-4 Omni), shifting from unimodal (text-only) to omni-modal (all-modalities, including text, image&#x2F;video, audio&#x2F;speech)</li>
+<li>“Omni” marks a paradigm shift in AI<ul>
+<li>from chaining separate models (e.g., Whisper + Llama + TTS)</li>
+<li>toward unified, single-tower arch that process text, image, audio, and video through a shared latent space</li>
+</ul>
+</li>
+</ul>
+<p><strong>OSS Omni models</strong></p>
+<ul>
+<li>Qwen:<ul>
+<li>Qwen2-VL &#x2F; Qwen2-Audio: early models</li>
+<li>Qwen2.5-Omni: introducing Thinker-Talker</li>
+<li>Qwen3-Omni (Flash): lightweight, low-latency version for real-time</li>
+<li>Qwen3.5-Omni (March 2026): current flagship</li>
+</ul>
+</li>
+<li>GLM<ul>
+<li>GLM-4-Omni (August 2024): 1st major open-source “Omni” model from China</li>
+<li>CogVLM2-Video: visual backbone for their Omni-capable infra</li>
+</ul>
+</li>
+<li>MiMo-V2-Omni</li>
+<li>Mini-Omni &#x2F; Mini-Omni2</li>
+<li>…</li>
+</ul>
+<h1 id="1-Why-starting-vLLM-Omni"><a href="#1-Why-starting-vLLM-Omni" class="headerlink" title="1. Why starting vLLM-Omni?"></a>1. Why starting vLLM-Omni?</h1><p>by Roger Wang</p>
+<p><strong>TLDR:</strong> end-to-end Omni-modality models need efficient multi-stage  management</p>
+<h2 id="1-1-end-to-end-models"><a href="#1-1-end-to-end-models" class="headerlink" title="1.1 end-to-end models"></a>1.1 end-to-end models</h2><p>vLLM-Omni was started shortly after Qwen2.5-Omni &#x2F; MiniCPM-o releases (Apr 2025)</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2503.20215">https://arxiv.org/abs/2503.20215</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/OpenBMB/MiniCPM-o">https://github.com/OpenBMB/MiniCPM-o</a></li>
+</ul>
+<p>both were <strong>e2e models</strong></p>
+<ul>
+<li>supporting MM understanding (as inputs)</li>
+<li>AND supporting MM generation (as outputs)</li>
+</ul>
+<h2 id="1-2-difficulties-to-support-e2d-models"><a href="#1-2-difficulties-to-support-e2d-models" class="headerlink" title="1.2 difficulties to support e2d models"></a>1.2 difficulties to support e2d models</h2><ol>
+<li><strong>encoding</strong> <strong>was larger and larger</strong><ul>
+<li>diffusion models era: T5 for encoding was suffieicent</li>
+<li>Qwen-Image dual-encoding:  Qwen2.5-VL + VAE encoder</li>
+</ul>
+</li>
+<li><strong>more complicated pipelines&#x2F;workflows</strong><br>- diffusion before: one encoding + one DiT decoding<br>- now: Qwen2.5-Omni has Thinker, Talker, Vision&#x2F;Audio encoder, etc.</li>
+</ol>
+<pre><code class="hljs">- TTS before: one encoding + one audio generation step
+- now: Xiao MiMo-Audio has more inteactions during encoding
+    - https://github.com/XiaomiMiMo/MiMo-Audio
+</code></pre>
+<h2 id="1-3-multi-stage-management"><a href="#1-3-multi-stage-management" class="headerlink" title="1.3 multi-stage management"></a>1.3 multi-stage management</h2><p>Needed a good framework for <strong>multi-stage management</strong></p>
+<ul>
+<li>conventional LLMs have two stages: prefill and decode</li>
+<li>e2e MM models can have various and quite different stages<ul>
+<li>MM encoding, MM input process</li>
+<li>MM generation</li>
+<li>interactions between different modalities</li>
+<li>…</li>
+</ul>
+</li>
+<li>more <strong>data transfers and interactions</strong> among stages<ul>
+<li>data transfer: not only KV cache, but also various embeddings</li>
+<li>interaction: transfer can be bidrectional &#x2F; back and forth</li>
+</ul>
+</li>
+<li>the workflow was quite complicated and not stablized → need a dedicated framwork that envloes with model developments (stages may change a lot)</li>
+</ul>
+<blockquote>
+<p>… multiple stages are processed by different LLMEngines, DiffusionEngines or other types of engines.</p>
+<p>Depending on different types of stages, such as AR stage or DiT stage, each can choose corresponding schedulers, model workers to load with the Engines in a plug-in fashion.</p>
+</blockquote>
+<h2 id="FAQ"><a href="#FAQ" class="headerlink" title="FAQ"></a>FAQ</h2><p><strong>Q1: How large will Omni models be?</strong></p>
+<p>It will continue to scale (not clear what a good Omini model is at this point)</p>
+<ul>
+<li>Qwen2.5-Omni: 7B</li>
+<li>Qwen3-Omni: 30B</li>
+<li>Qwen3.5-Omni: even larger</li>
+</ul>
+<p><strong>Q2: difference between Omni models and VLM</strong></p>
+<ul>
+<li>VLM can handle MM understading tasks</li>
+<li>Omni focuses more on MM generation</li>
+</ul>
+<p><strong>Q3: does Omni need autoscaling for individual stages in the future?</strong></p>
+<ul>
+<li>yes</li>
+</ul>
+<p><strong>Q4: does AR and diffusion models have a unified abstracion?</strong></p>
+<ul>
+<li>no unified abstraction</li>
+<li>the unified abstraction in vLLM-Omni is “stage”</li>
+</ul>
+<h1 id="2-vLLM-Omni-overview"><a href="#2-vLLM-Omni-overview" class="headerlink" title="2. vLLM-Omni overview"></a>2. vLLM-Omni overview</h1><p>vLLM supports MM inputs, while vLLM-Omni also supports MM outputs</p>
+<p><strong>Omni-modality:</strong> Text, image, video, and audio data processing</p>
+<p><strong>Non-AR Architectures:</strong> extend the AR support of vLLM to Diffusion Transformers (DiT) and other parallel generation models</p>
+<p><strong>Heterogeneous outputs:</strong> from traditional text generation to multimodal outputs</p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>Broad model support</strong></p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="3-System-walkthrough"><a href="#3-System-walkthrough" class="headerlink" title="3. System walkthrough"></a>3. System walkthrough</h1><p>by Zhipeng Wang</p>
+<p>Goal</p>
+<ul>
+<li>understand how vLLM-Omni processes a <strong>multi-modal</strong> request and generates its <strong>multi-modal</strong> outputs.</li>
+<li>learn where to modify if you would like to make a specific modification&#x2F;contribution.</li>
+</ul>
+<h2 id="3-1-Model-types"><a href="#3-1-Model-types" class="headerlink" title="3.1 Model types"></a>3.1 Model types</h2><h3 id="a-Thinker-talker"><a href="#a-Thinker-talker" class="headerlink" title="(a) Thinker-talker"></a>(a) Thinker-talker</h3><p><img src="/img/vLLM-Omni%20deep%20dive/image%203.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>Tasks</strong></p>
+<ul>
+<li>any-to-any</li>
+<li>a natively e2e omni-modal LLM for multimodal inputs (text&#x2F;image&#x2F;audio&#x2F;video…) and outputs (text&#x2F;audio…)</li>
+</ul>
+<p><strong>Backbone</strong>: multiple AR decoders + DiT</p>
+<p><strong>Models</strong>: Qwen-Omni&#x2F;Ming-Omni</p>
+<h3 id="b-AR-DiT"><a href="#b-AR-DiT" class="headerlink" title="(b) AR + DiT"></a>(b) AR + DiT</h3><p><img src="/img/vLLM-Omni%20deep%20dive/image%204.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>Tasks</strong></p>
+<ul>
+<li>text2image, text2video, image2image, etc.</li>
+<li>a powerful image generation foundation model capable of complex text rendering and precise image editing</li>
+</ul>
+<p><strong>Backbone:</strong> <strong>AR + DiT</strong></p>
+<ul>
+<li>DiT as a main structure, with AR as text encoder</li>
+</ul>
+<p><strong>Models:</strong> Qwen-Image&#x2F;GLM-Image</p>
+<h3 id="c-AR-specialized-generator"><a href="#c-AR-specialized-generator" class="headerlink" title="(c) AR + specialized generator"></a>(c) AR + specialized generator</h3><p><img src="/img/vLLM-Omni%20deep%20dive/image%205.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>Tasks</strong></p>
+<ul>
+<li>text2image, image2image, image2text, etc.</li>
+<li>a unified multimodal comprehension and generation model, with CoT text output and visual generation</li>
+</ul>
+<p><strong>Backbone:</strong> <strong>AR + Spec. Gen.</strong></p>
+<p><strong>Models:</strong> BAGEL, Hunyuan Image 3.0</p>
+<h2 id="3-2-AR-vs-DiT"><a href="#3-2-AR-vs-DiT" class="headerlink" title="3.2 AR vs DiT"></a>3.2 AR vs DiT</h2><table>
+<thead>
+<tr>
+<th></th>
+<th><strong>AR</strong></th>
+<th><strong>DiT</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Use cases</td>
+<td>Text generation</td>
+<td>Multi-modelity generation</td>
+</tr>
+<tr>
+<td>Generation process</td>
+<td>Token-by-token KV Cache based</td>
+<td>Diffusion step</td>
+</tr>
+<tr>
+<td>Bottleneck</td>
+<td>Prefill: compute bound</td>
+<td></td>
+</tr>
+<tr>
+<td>Decode: memory bound</td>
+<td>Compute bound</td>
+<td></td>
+</tr>
+<tr>
+<td>Seq length</td>
+<td>varied</td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td>Attention Mask</td>
+<td>causal mask</td>
+<td>Full mask</td>
+</tr>
+<tr>
+<td>parallelism</td>
+<td>TP&#x2F;DP&#x2F;EP&#x2F;PP&#x2F;CP&#x2F;SP</td>
+<td>TP&#x2F;EP&#x2F;USP&#x2F;CFG (explained later)</td>
+</tr>
+</tbody></table>
+<h2 id="3-3-vLLM-Omni-arch"><a href="#3-3-vLLM-Omni-arch" class="headerlink" title="3.3 vLLM-Omni arch"></a>3.3 vLLM-Omni arch</h2><ul>
+<li>blue parts: imported from vLLM; yellow part: modified; read: new</li>
+<li><strong>Entrypoints:</strong> offline&#x2F;online serving, OmniStage abstraction for model stages(AR&#x2F;DiT)</li>
+<li><strong>AR module:</strong> inherited from vLLM (cotinous batching&#x2F;paged attention&#x2F;prefix caching…) and adapted to the Omni-modality model<ul>
+<li>modified some part, e.g., to expose hidden states</li>
+</ul>
+</li>
+<li><strong>Diffusion module:</strong> implemented natively and optimized by acceleration components</li>
+<li><strong>Model&#x2F;Layer&#x2F;ops:</strong> parallelism, quantization, attention…</li>
+<li><strong>OmniConnector:</strong> natively supports E&#x2F;P&#x2F;D&#x2F;G ((Encoding&#x2F;Processing&#x2F;Decoding&#x2F;Generation) ) disaggregation</li>
+</ul>
+<h2 id="3-4-Hardware-plugin-system"><a href="#3-4-Hardware-plugin-system" class="headerlink" title="3.4 Hardware plugin system"></a>3.4 Hardware plugin system</h2><ul>
+<li><strong>Multi-Hardware Coverage:</strong> CUDA&#x2F;ROCm&#x2F;NPU&#x2F;XPU</li>
+<li><strong>Composable Inheritance:</strong> Reuses vLLM’s native platform capabilities (for AR) via multiple inheritance while adding Omni-specific interfaces.</li>
+<li><strong>Unified Abstract Interface:</strong> current_omni_platform</li>
+<li><strong>Op Dispatch:</strong> Attention backends and custom ops are dispatched per-platform with hardware-optimized implementations.</li>
+</ul>
+<h1 id="4-AR-module-design"><a href="#4-AR-module-design" class="headerlink" title="4. AR module design"></a>4. AR module design</h1><p>by Zhipeng Wang</p>
+<h2 id="4-1-system-arch"><a href="#4-1-system-arch" class="headerlink" title="4.1 system arch"></a>4.1 system arch</h2><ol>
+<li>Handles autoregressive generation stages:</li>
+</ol>
+<ul>
+<li><strong>Text generation</strong></li>
+<li><strong>Hidden embeddings</strong>: e.g., for audio genration Qwen-Omni</li>
+<li><strong>multimodal latent tokens:</strong> e.g., Talker in Qwen3-Omni need some AR genarations</li>
+</ul>
+<ol start="2">
+<li>Extends vLLM’s core to support:</li>
+</ol>
+<ul>
+<li><strong>Multimodal inputs&#x2F;outputs:</strong> processing images, videos, and audio alongside text</li>
+<li><strong>Prompt Embedding:</strong> passing pre-computed prompt embeddings between pipeline stages via serialized payloads</li>
+<li><strong>Additional information:</strong> Carrying per-request metadata (tensors, lists), e.g., for tone&#x2F;style instructions, through the pipeline</li>
+</ul>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%206.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="4-2-stage-abstraction-Qwen3-Omni-example"><a href="#4-2-stage-abstraction-Qwen3-Omni-example" class="headerlink" title="4.2 stage abstraction: Qwen3-Omni example"></a>4.2 stage abstraction: Qwen3-Omni example</h2><ul>
+<li>config file: <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/stage_configs/qwen3_omni_moe.yaml">https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/stage_configs/qwen3_omni_moe.yaml</a></li>
+<li>3 stages: thinker, talker, and Code2wav<ul>
+<li>thinker: MM understanding</li>
+<li>talker and Code2wave: TTS</li>
+</ul>
+</li>
+<li>these stages can be put on different devices</li>
+<li>we can config their ultilizaiton, output type, etc.</li>
+</ul>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%207.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%208.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="4-3-disagg-serving"><a href="#4-3-disagg-serving" class="headerlink" title="4.3 disagg serving"></a>4.3 disagg serving</h2><p><img src="/img/vLLM-Omni%20deep%20dive/image%209.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li><strong>Standardized Unified Abstraction:</strong> A generalized interface that handles heterogeneous data (Text, Image, Audio).<ul>
+<li>e.g., Owen3-Omni thinker outputs hidden states rather than token IDs</li>
+<li>OmniConnector handles data transfer, no matther it’s tensor, float, or something else</li>
+</ul>
+</li>
+<li><strong>Control &amp; Data Plane Decoupling:</strong> Metadata travels via lightweight control signals, while heavy payloads are offloaded to high-performance data planes.</li>
+<li><strong>Hybrid Backend Support:</strong> Native support for Shared Memory (SHM) and Mooncake for distributed transfers.</li>
+<li><strong>Disaggregated Multi-Modal Execution:</strong> Enables seamless communication between decoupled stages.</li>
+<li><strong>Multi-Instance Scaling:</strong> Supports multiple instances for each omni stage, enabling elastic deployment and efficient load distribution across distributed clusters.</li>
+</ul>
+<h2 id="4-4-async-chunk-transfer-streaming-ouput"><a href="#4-4-async-chunk-transfer-streaming-ouput" class="headerlink" title="4.4. async chunk transfer &amp; streaming ouput"></a>4.4. async chunk transfer &amp; streaming ouput</h2><p>use Qwen3-Omni as an example</p>
+<p><strong>navie solution: e2e sync genration</strong></p>
+<ul>
+<li>encode text&#x2F;image&#x2F;video&#x2F;audio</li>
+<li>pass embedding to Thinker, and do AR to decode all tokens</li>
+<li>pass all tokens to Talker, which then generate tokens as the input of Code2wav</li>
+</ul>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%2010.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>vLLM-Omni: async chunk transfer &amp; streaming ouput</strong></p>
+<ul>
+<li><strong>Pipeline Between Stages:</strong> Asynchronous chunked computation and communication across stages</li>
+<li><strong>Audio Streaming Output:</strong> The waveform is output immediately after Talker generates each token.</li>
+</ul>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%2011.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p><strong>Implementation details</strong></p>
+<ul>
+<li><strong>OmniConnector</strong>: Transmit data between stages.</li>
+<li><strong>OmniChunkTransferAdapter</strong>: Chunk-specific implementation that owns the full chunk lifecycle when async_chunk is enabled.</li>
+<li><strong>Stage Input Processors</strong>: Custom functions that process stage outputs into chunks for different models.</li>
+<li><strong>Schedulers</strong>: Modified to handle chunk-based scheduling with async IO-compute overlap.</li>
+<li><strong>Model Runners</strong>: Handle chunk processing.</li>
+</ul>
+<p><strong>speedup</strong></p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/qwen3-omni_e2e_performance.png" srcset="/img/loading.gif" lazyload alt="qwen3-omni_e2e_performance.png"></p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/qwen3-omni_ttfp_performance.png" srcset="/img/loading.gif" lazyload alt="qwen3-omni_ttfp_performance.png"></p>
+<p><img src="/img/vLLM-Omni%20deep%20dive/qwen3-omni_rtf_performance.png" srcset="/img/loading.gif" lazyload alt="qwen3-omni_rtf_performance.png"></p>
+<h1 id="6-Diffusion-module-design"><a href="#6-Diffusion-module-design" class="headerlink" title="6. Diffusion module design"></a>6. Diffusion module design</h1><p><img src="/img/vLLM-Omni%20deep%20dive/4be3bc52-9840-42dd-af76-254b08f5de86.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="6-1-Diffusion-Core"><a href="#6-1-Diffusion-Core" class="headerlink" title="6.1 Diffusion Core"></a><strong>6.1 Diffusion Core</strong></h2><ul>
+<li>Support step-wise scheduler with continuous batch for higher SLA<ul>
+<li>2026 Q2 roadmap: support <strong>continous batching</strong></li>
+</ul>
+</li>
+<li>Encoders are disaggregated to run on vllm engine</li>
+<li>Connect with AR module to speed up AR+DIT model inference with OmniConnector</li>
+</ul>
+<h2 id="6-2-Acceleration-Features"><a href="#6-2-Acceleration-Features" class="headerlink" title="6.2 Acceleration Features"></a><strong>6.2 Acceleration Features</strong></h2><ul>
+<li><strong>Parallelism:</strong> HSDP&#x2F;SP&#x2F;VAE&#x2F;CFG&#x2F;TP (explained in the next section)</li>
+<li><strong>Quantization:</strong> FP8&#x2F;GGUF…<ul>
+<li>case-by-case modification to model code; need intensive abaltion studies</li>
+</ul>
+</li>
+<li><strong>CPU Offload:</strong><ul>
+<li>many diffsuion models are deployed on PC, so this feature is important</li>
+<li>module-wise: modules are loaded and evicted on the fly</li>
+<li>layer-wise: prefecth serveral layers’ weights</li>
+</ul>
+</li>
+<li><strong>Attention:</strong> interface abstraction for third-party integration(FA&#x2F;SAGE&#x2F;MindIE-SD…)</li>
+<li><strong>Cache backend:</strong> Cache-DiT, TeaCache (explained blow)</li>
+<li><strong>Extensions:</strong> LoRA</li>
+</ul>
+<p><img src="/img/vLLM-Omni%20deep%20dive/image%2012.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="7-Cache"><a href="#7-Cache" class="headerlink" title="7. Cache"></a>7. Cache</h1><ul>
+<li>Main techniques: TeaCache &amp; Cache-DiT</li>
+<li>both tackle the sequential bottleneck of DiTs by reusing intermediate computations across timesteps</li>
+<li>TeaCache is a simpler, coarser in-house solution: skip all transformer blocks if the step looks similar enough</li>
+<li>Cache-DiT is a more powerful external library with fine-grained per-block control and multiple caching strategies, but it requires less boilerplate for standard models</li>
+</ul>
+<h3 id="TeaCache"><a href="#TeaCache" class="headerlink" title="TeaCache"></a>TeaCache</h3><ul>
+<li><strong>assumption</strong>: diff between consecutive timestep embeddings is a highly accurate proxy for  diff in the model’s actual outputs</li>
+<li>cache <strong>entire transformer blocks</strong> computations when <strong>consecutive timesteps</strong> produce similar inputs</li>
+<li><strong>core mechanism</strong><ul>
+<li>measures L1 distance between consecutive modulated inputs (after norm + timestep conditioning)</li>
+<li>if below threshold, reuses the previous step’s cached residual instead of running expensive forward pass</li>
+</ul>
+</li>
+<li>Implemented via a hook that intercepts the transformer’s forward pass — zero changes to model code required</li>
+</ul>
+<h3 id="Cache-DiT"><a href="#Cache-DiT" class="headerlink" title="Cache-DiT"></a>Cache-DiT</h3><ul>
+<li>an external library (<code>cache-dit</code>) integrated into vllm-omni that caches intermediate <strong>block-level</strong> features across denoising steps</li>
+<li>caches intermediate computation results across denoising steps.</li>
+<li>core insight: <strong>adjacent denoising steps often produce similar intermediate features</strong>, so we can skip redundant computations by reusing cached results</li>
+</ul>
+<p>supports three strategies</p>
+<ul>
+<li><strong>DBCache:</strong> dynamic block-level caching that selectively computes or caches transformer blocks based on residual differences between steps</li>
+<li><strong>TaylorSeer:</strong>  calibration-based prediction using Taylor expansion to estimate block outputs</li>
+<li><strong>SCM (Step Computation Masking):</strong> dynamic step skipping based on configurable policies</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>TeaCache</th>
+<th>Cache-DiT</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Decision unit</strong></td>
+<td>Whole transformer block stack (skip all or run all)</td>
+<td>Individual transformer blocks (selective per-block)</td>
+</tr>
+<tr>
+<td><strong>Cache signal</strong></td>
+<td>L1 distance on modulated input of first block</td>
+<td>Residual difference between block outputs</td>
+</tr>
+<tr>
+<td><strong>Mechanism</strong></td>
+<td>Hook intercepts forward pass; reuses cached residual</td>
+<td>Library patches transformer modules in-place</td>
+</tr>
+</tbody></table>
+<h1 id="8-Parallelism"><a href="#8-Parallelism" class="headerlink" title="8. Parallelism"></a>8. Parallelism</h1><h2 id="8-1-Tensor-Parallel-TP"><a href="#8-1-Tensor-Parallel-TP" class="headerlink" title="8.1 Tensor Parallel (TP)"></a>8.1 Tensor Parallel (TP)</h2><ul>
+<li>similar to LLM sharding model weights across GPUs</li>
+<li>dach GPU computes a fraction of every attention head and MLP output, then results are reduced via all-reduce</li>
+<li>cannot be combined with HSDP</li>
+</ul>
+<h2 id="8-2-Sequence-Parallel-SP"><a href="#8-2-Sequence-Parallel-SP" class="headerlink" title="8.2 Sequence Parallel (SP)"></a>8.2 Sequence Parallel (SP)</h2><ul>
+<li>splits the <strong>input sequence</strong> (image patches or video frames) across GPUs so each GPU processes only a portion of the tokens.</li>
+<li>Attention across the full sequence is handled via Ulysses (all-to-all) or Ring (peer-to-peer) communication</li>
+<li><strong>Ulysses attention</strong><ul>
+<li>before each attention layer, GPUs do an all-to-all exchange so that each GPU temporarily holds all tokens for a subset of attention heads</li>
+<li>each GPU computes full-sequence attention for its head slice, then another all-to-all restores the original sequence split</li>
+<li>fast but requires the number of attention heads to be divisible by <code>ulysses_degree</code></li>
+</ul>
+</li>
+<li><strong>Ring attention</strong><ul>
+<li>GPUs are arranged in a logical ring</li>
+<li>each GPU holds its local sequence chunk and its own Q vectors</li>
+<li>KV chunks are passed around the ring one step at a time</li>
+<li>each GPU accumulates attention scores incrementally as KV chunks arrive</li>
+<li>no divisibility constraint on heads, but adds latency proportional to ring size</li>
+</ul>
+</li>
+</ul>
+<h2 id="8-3-HSDP-Hybrid-Sharded-Data-Parallel"><a href="#8-3-HSDP-Hybrid-Sharded-Data-Parallel" class="headerlink" title="8.3 HSDP (Hybrid Sharded Data Parallel)"></a>8.3 HSDP (Hybrid Sharded Data Parallel)</h2><ul>
+<li>shards <strong>model weights</strong> across GPUs using PyTorch FSDP2, gathering them on-demand during the forward pass.</li>
+<li>Cannot be combined with TP</li>
+</ul>
+<h2 id="8-4-VAE-Parallel"><a href="#8-4-VAE-Parallel" class="headerlink" title="8.4 VAE Parallel"></a>8.4 VAE Parallel</h2><ul>
+<li>VAE is the final stage that converts the denoised latent tensor into pixel-space images or video frames.</li>
+<li>splits the <strong>VAE decoding step</strong> across GPUs</li>
+<li>the latent tensor is tiled into spatial patches; each GPU decodes its assigned tiles in parallel</li>
+<li>tiles overlap slightly and are blended at the boundaries to avoid seams</li>
+<li>reduces peak memory and decoding latency, especially for high-resolution or video outputs</li>
+</ul>
+<h2 id="8-5-CFG-Parallel"><a href="#8-5-CFG-Parallel" class="headerlink" title="8.5 CFG Parallel"></a>8.5 CFG Parallel</h2><p>Distributes the two forward passes required by <strong>Classifier-Free Guidance (CFG)</strong> across GPUs so they run simultaneously.</p>
+<ul>
+<li>CFG is a standard technique for steering image generation<ul>
+<li>the model runs once with your text prompt (conditional)</li>
+<li>and once without (unconditional)</li>
+<li>the outputs are blended to improve quality</li>
+</ul>
+</li>
+<li>w&#x2F;o CFG Parallel, these two passes are sequential; CFG Parallel assigns each pass to a different GPU rank, halving the per-step latency</li>
+<li>Results are gathered via all-gather; all ranks then compute the CFG combination locally</li>
+</ul>
+<h2 id="8-6-how-to-select-parallelisms"><a href="#8-6-how-to-select-parallelisms" class="headerlink" title="8.6 how to select parallelisms?"></a>8.6 how to select parallelisms?</h2><ul>
+<li><strong>Model too large to fit in a single GPU?</strong><ul>
+<li>TP &#x2F; HSDP</li>
+</ul>
+</li>
+<li><strong>Sequence too long causing OOM?</strong><ul>
+<li>Ulysses-SP &#x2F; Ring Attention</li>
+</ul>
+</li>
+<li><strong>CFG inference too slow?</strong><ul>
+<li>CFG-Parallel: this is the most stable method</li>
+</ul>
+</li>
+<li><strong>VAE decoding memory explosion?</strong><ul>
+<li>VAE Patch Parallelism</li>
+</ul>
+</li>
+</ul>
+<h1 id="9-2026-Q2-roadmap"><a href="#9-2026-Q2-roadmap" class="headerlink" title="9. 2026 Q2 roadmap"></a>9. 2026 Q2 roadmap</h1><ul>
+<li>Support world model &amp; VLA model</li>
+<li>Support streaming input (audio, text, video): required by World models</li>
+<li>Support RL for multi-stage model</li>
+</ul>
+<p>Source: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=KOJRMzguirs">https://www.youtube.com/watch?v=KOJRMzguirs</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM-inference/" class="print-no-link">#LLM inference</a>
+      
+        <a href="/tags/vLLM/" class="print-no-link">#vLLM</a>
+      
+        <a href="/tags/Omni/" class="print-no-link">#Omni</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>vLLM-Omni deep dive</div>
+      <div>https://gdymind.github.io/2026/04/04/vLLM-Omni-deep-dive/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>April 4, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/03/08/Pallas-examples-by-Pallas-author-Sharad-Vikram/" title="Pallas examples by Sharad Vikram (Pallas author)">
+                        <span class="hidden-mobile">Pallas examples by Sharad Vikram (Pallas author)</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2026/04/04/vLLM-Omni-deep-dive/';
+          this.page.identifier = '/2026/04/04/vLLM-Omni-deep-dive/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        visited 
+        <span id="busuanzi_value_site_pv"></span>
+         times
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        unique visitors: 
+        <span id="busuanzi_value_site_uv"></span>
+        
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
