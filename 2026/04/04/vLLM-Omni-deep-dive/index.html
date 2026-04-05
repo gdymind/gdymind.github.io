@@ -32,6 +32,7 @@
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%203.png">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%204.png">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%205.png">
+<meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/arch.webp">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%206.png">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%207.png">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%208.png">
@@ -44,7 +45,7 @@
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/4be3bc52-9840-42dd-af76-254b08f5de86.png">
 <meta property="og:image" content="https://gdymind.github.io/img/vLLM-Omni%20deep%20dive/image%2012.png">
 <meta property="article:published_time" content="2026-04-05T00:58:20.000Z">
-<meta property="article:modified_time" content="2026-04-05T01:01:58.979Z">
+<meta property="article:modified_time" content="2026-04-05T01:24:31.999Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="LLM inference">
 <meta property="article:tag" content="vLLM">
@@ -249,7 +250,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          654 words
+          649 words
         
       </span>
     
@@ -343,8 +344,8 @@
 </ul>
 <p>both were <strong>e2e models</strong></p>
 <ul>
-<li>supporting MM understanding (as inputs)</li>
-<li>AND supporting MM generation (as outputs)</li>
+<li>supporting Omni understanding (as inputs)</li>
+<li>AND supporting Omni generation (as outputs)</li>
 </ul>
 <h2 id="1-2-difficulties-to-support-e2d-models"><a href="#1-2-difficulties-to-support-e2d-models" class="headerlink" title="1.2 difficulties to support e2d models"></a>1.2 difficulties to support e2d models</h2><ol>
 <li><strong>encoding</strong> <strong>was larger and larger</strong><ul>
@@ -361,9 +362,9 @@
 <h2 id="1-3-multi-stage-management"><a href="#1-3-multi-stage-management" class="headerlink" title="1.3 multi-stage management"></a>1.3 multi-stage management</h2><p>Needed a good framework for <strong>multi-stage management</strong></p>
 <ul>
 <li>conventional LLMs have two stages: prefill and decode</li>
-<li>e2e MM models can have various and quite different stages<ul>
-<li>MM encoding, MM input process</li>
-<li>MM generation</li>
+<li>e2e Omni models can have various and quite different stages<ul>
+<li>Omni encoding, Omni input process</li>
+<li>Omni generation</li>
 <li>interactions between different modalities</li>
 <li>…</li>
 </ul>
@@ -388,8 +389,8 @@
 </ul>
 <p><strong>Q2: difference between Omni models and VLM</strong></p>
 <ul>
-<li>VLM can handle MM understading tasks</li>
-<li>Omni focuses more on MM generation</li>
+<li>VLM can handle Omni understading tasks</li>
+<li>Omni focuses more on Omni generation</li>
 </ul>
 <p><strong>Q3: does Omni need autoscaling for individual stages in the future?</strong></p>
 <ul>
@@ -400,7 +401,7 @@
 <li>no unified abstraction</li>
 <li>the unified abstraction in vLLM-Omni is “stage”</li>
 </ul>
-<h1 id="2-vLLM-Omni-overview"><a href="#2-vLLM-Omni-overview" class="headerlink" title="2. vLLM-Omni overview"></a>2. vLLM-Omni overview</h1><p>vLLM supports MM inputs, while vLLM-Omni also supports MM outputs</p>
+<h1 id="2-vLLM-Omni-overview"><a href="#2-vLLM-Omni-overview" class="headerlink" title="2. vLLM-Omni overview"></a>2. vLLM-Omni overview</h1><p>vLLM supports Omni inputs, while vLLM-Omni also supports Omni outputs</p>
 <p><strong>Omni-modality:</strong> Text, image, video, and audio data processing</p>
 <p><strong>Non-AR Architectures:</strong> extend the AR support of vLLM to Diffusion Transformers (DiT) and other parallel generation models</p>
 <p><strong>Heterogeneous outputs:</strong> from traditional text generation to multimodal outputs</p>
@@ -484,8 +485,8 @@
 <td>TP&#x2F;EP&#x2F;USP&#x2F;CFG (explained later)</td>
 </tr>
 </tbody></table>
-<h2 id="3-3-vLLM-Omni-arch"><a href="#3-3-vLLM-Omni-arch" class="headerlink" title="3.3 vLLM-Omni arch"></a>3.3 vLLM-Omni arch</h2><ul>
-<li>blue parts: imported from vLLM; yellow part: modified; read: new</li>
+<h2 id="3-3-vLLM-Omni-arch"><a href="#3-3-vLLM-Omni-arch" class="headerlink" title="3.3 vLLM-Omni arch"></a>3.3 vLLM-Omni arch</h2><p><img src="/img/vLLM-Omni%20deep%20dive/arch.webp" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
 <li><strong>Entrypoints:</strong> offline&#x2F;online serving, OmniStage abstraction for model stages(AR&#x2F;DiT)</li>
 <li><strong>AR module:</strong> inherited from vLLM (cotinous batching&#x2F;paged attention&#x2F;prefix caching…) and adapted to the Omni-modality model<ul>
 <li>modified some part, e.g., to expose hidden states</li>
@@ -522,7 +523,7 @@
 <h2 id="4-2-stage-abstraction-Qwen3-Omni-example"><a href="#4-2-stage-abstraction-Qwen3-Omni-example" class="headerlink" title="4.2 stage abstraction: Qwen3-Omni example"></a>4.2 stage abstraction: Qwen3-Omni example</h2><ul>
 <li>config file: <a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/stage_configs/qwen3_omni_moe.yaml">https://github.com/vllm-project/vllm-omni/blob/main/vllm_omni/model_executor/stage_configs/qwen3_omni_moe.yaml</a></li>
 <li>3 stages: thinker, talker, and Code2wav<ul>
-<li>thinker: MM understanding</li>
+<li>thinker: Omni understanding</li>
 <li>talker and Code2wave: TTS</li>
 </ul>
 </li>
