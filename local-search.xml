@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>DeepSeek V4 attention: how it handles longer context (English video)</title>
+    <link href="/2026/04/27/DeepSeek-V4-attention-deep-dive-say-yes-to-longer-context/"/>
+    <url>/2026/04/27/DeepSeek-V4-attention-deep-dive-say-yes-to-longer-context/</url>
+    
+    <content type="html"><![CDATA[<p>I made a video for this. Here is the <a href="https://www.youtube.com/watch?v=x8r5EWuelwk">Youtube link</a>.</p><h1 id="1-Long-context-challenges"><a href="#1-Long-context-challenges" class="headerlink" title="1. Long context challenges"></a>1. Long context challenges</h1><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_58_03_AM.png" alt="Apr 24, 2026, 09_58_03 AM.png"></p><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_49_33_AM.png" alt="Apr 24, 2026, 09_49_33 AM.png"></p><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_10_00_39_AM.png" alt="Apr 24, 2026, 10_00_39 AM.png"></p><h1 id="2-From-MLA-DSA-to-HCA-CSA"><a href="#2-From-MLA-DSA-to-HCA-CSA" class="headerlink" title="2. From MLA, DSA to HCA&#x2F;CSA"></a>2. From MLA, DSA to HCA&#x2F;CSA</h1><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/image.png" alt="image.png"></p><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_03_55_00_PM.png" alt="Apr 24, 2026, 03_55_00 PM.png"></p><h1 id="3-MLA-low-rank-KV-cache"><a href="#3-MLA-low-rank-KV-cache" class="headerlink" title="3. MLA: low-rank KV cache"></a>3. MLA: low-rank KV cache</h1><p><strong>Purpose</strong>: reduce KV cache size</p><p><strong>Method</strong>: compress KV into a low-rank latent space (D → R)</p><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/image%201.png" alt="image.png"></p><p><strong>Decoupled RoPE</strong></p><p>without RoPE</p><p>$$<br>Q K^\top &#x3D; (C_QW_{UQ} )( C_{KV}W_{UK} )^\top \ &#x3D; C_Q W_{UQ} W_{UK}^\top C_{KV}^\top \ &#x3D; C_Q (W_{UQ} W_{UK}^\top) C_{KV}<br>$$</p><p>with RoPE</p><p>$$<br>Q K^\top &#x3D; (C_QW_{UQ}  R_Q)( C_{KV}W_{UK}R_K )^\top \ &#x3D; C_Q W_{UQ}R_Q R_K^\top W_{UK}^\top C_{KV}^\top  \  &#x3D; C_Q W_{UQ}R_\Delta W_{UK}^\top C_{KV}^\top<br>$$</p><h1 id="4-DSA-top-k-attention"><a href="#4-DSA-top-k-attention" class="headerlink" title="4. DSA: top-k attention"></a>4. DSA: top-k attention</h1><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/image%202.png" alt="image.png"></p><h1 id="5-V4-Hybrid-attention"><a href="#5-V4-Hybrid-attention" class="headerlink" title="5. V4 Hybrid attention"></a>5. V4 Hybrid attention</h1><h2 id="CSA-C4A"><a href="#CSA-C4A" class="headerlink" title="CSA (C4A)"></a><strong>CSA (C4A)</strong></h2><ul><li>compress the KV cache of every 4 tokens into one entry</li><li>then apply DSA where each query token attends to only 𝑘 compressed KV entries</li><li>sliding-window branch: attend to previous 128 uncompressed tokens</li></ul><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/02fc7a6a-8dfd-4163-b154-a40c941b7e3e.png" alt="image.png"></p><h2 id="HCA-C128A"><a href="#HCA-C128A" class="headerlink" title="HCA (C128A)"></a><strong>HCA (C128A)</strong></h2><ul><li>compress the KV cache of every 128  tokens into one entry</li><li>then apply dense attention</li><li>same sliding-window branch</li></ul><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/806183c3-1218-4e6d-b1a2-d932c48962eb.png" alt="image.png"></p><h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><p><a href="https://vllm.ai/blog/deepseek-v4">https://vllm.ai/blog/deepseek-v4</a></p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>LLM inference</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Rotary Position Embedding (RoPE) deep dive</title>
     <link href="/2026/04/19/RoPE/"/>
     <url>/2026/04/19/RoPE/</url>
