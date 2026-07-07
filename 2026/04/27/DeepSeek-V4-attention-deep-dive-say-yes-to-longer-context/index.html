@@ -19,12 +19,12 @@
   <meta name="author" content="gdymind">
   <meta name="keywords" content="">
   
-    <meta name="description" content="I made a video for this. Here is the Youtube link. 1. Long context challenges   2. From MLA, DSA to HCA&#x2F;CSA  3. MLA: low-rank KV cachePurpose: reduce KV cache size Method: compress KV into a low-">
+    <meta name="description" content="English Video Link: https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;x8r5EWuelwkChinese Video Link: https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;Lj0XXRRny70 1. Long context challenges   2. From MLA, DSA to HCA&#x2F;CSA  3. MLA: lo">
 <meta property="og:type" content="article">
-<meta property="og:title" content="DeepSeek V4 attention: how it handles longer context (English video)">
+<meta property="og:title" content="DeepSeek V4 attention: how it handles longer context (Video + Blog)">
 <meta property="og:url" content="https://gdymind.github.io/2026/04/27/DeepSeek-V4-attention-deep-dive-say-yes-to-longer-context/index.html">
 <meta property="og:site_name" content="gdymind&#39;s Blog">
-<meta property="og:description" content="I made a video for this. Here is the Youtube link. 1. Long context challenges   2. From MLA, DSA to HCA&#x2F;CSA  3. MLA: low-rank KV cachePurpose: reduce KV cache size Method: compress KV into a low-">
+<meta property="og:description" content="English Video Link: https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;x8r5EWuelwkChinese Video Link: https:&#x2F;&#x2F;www.youtube.com&#x2F;watch?v&#x3D;Lj0XXRRny70 1. Long context challenges   2. From MLA, DSA to HCA&#x2F;CSA  3. MLA: lo">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://gdymind.github.io/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_58_03_AM.png">
 <meta property="og:image" content="https://gdymind.github.io/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_49_33_AM.png">
@@ -36,7 +36,7 @@
 <meta property="og:image" content="https://gdymind.github.io/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/02fc7a6a-8dfd-4163-b154-a40c941b7e3e.png">
 <meta property="og:image" content="https://gdymind.github.io/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/806183c3-1218-4e6d-b1a2-d932c48962eb.png">
 <meta property="article:published_time" content="2026-04-28T06:13:53.000Z">
-<meta property="article:modified_time" content="2026-04-28T06:21:48.348Z">
+<meta property="article:modified_time" content="2026-07-07T04:48:58.620Z">
 <meta property="article:author" content="gdymind">
 <meta property="article:tag" content="LLM inference">
 <meta name="twitter:card" content="summary_large_image">
@@ -46,7 +46,7 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
   
   
-  <title>DeepSeek V4 attention: how it handles longer context (English video) - gdymind&#39;s Blog</title>
+  <title>DeepSeek V4 attention: how it handles longer context (Video + Blog) - gdymind&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -216,7 +216,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="DeepSeek V4 attention: how it handles longer context (English video)"></span>
+            <span id="subtitle" data-typed-text="DeepSeek V4 attention: how it handles longer context (Video + Blog)"></span>
           
         </div>
 
@@ -239,7 +239,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          93 words
+          105 words
         
       </span>
     
@@ -287,12 +287,12 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">DeepSeek V4 attention: how it handles longer context (English video)</h1>
+            <h1 id="seo-header">DeepSeek V4 attention: how it handles longer context (Video + Blog)</h1>
             
             
               <div class="markdown-body">
                 
-                <p>I made a video for this. Here is the <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=x8r5EWuelwk">Youtube link</a>.</p>
+                <p>English Video Link: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=x8r5EWuelwk">https://www.youtube.com/watch?v=x8r5EWuelwk</a><br>Chinese Video Link: <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=Lj0XXRRny70">https://www.youtube.com/watch?v=Lj0XXRRny70</a></p>
 <h1 id="1-Long-context-challenges"><a href="#1-Long-context-challenges" class="headerlink" title="1. Long context challenges"></a>1. Long context challenges</h1><p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_58_03_AM.png" srcset="/img/loading.gif" lazyload alt="Apr 24, 2026, 09_58_03 AM.png"></p>
 <p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_09_49_33_AM.png" srcset="/img/loading.gif" lazyload alt="Apr 24, 2026, 09_49_33 AM.png"></p>
 <p><img src="/img/DeepSeek%20V4%20Attention%20Say%20Yes%20to%20Longer%20Context/ChatGPT_Image_Apr_24_2026_10_00_39_AM.png" srcset="/img/loading.gif" lazyload alt="Apr 24, 2026, 10_00_39 AM.png"></p>
@@ -344,7 +344,7 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>DeepSeek V4 attention: how it handles longer context (English video)</div>
+      <div>DeepSeek V4 attention: how it handles longer context (Video + Blog)</div>
       <div>https://gdymind.github.io/2026/04/27/DeepSeek-V4-attention-deep-dive-say-yes-to-longer-context/</div>
     </div>
     <div class="license-meta">
@@ -388,6 +388,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2026/06/29/DSpark/" title="DSpark: DeepSeek&#39;s new speculative decoding work (Video + Blog)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">DSpark: DeepSeek&#39;s new speculative decoding work (Video + Blog)</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
