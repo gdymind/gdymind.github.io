@@ -1,0 +1,967 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gdymind">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="This blog is distilled from Miles v0.1 paper’s Section 1-4: Intro, Rollout, Training, and Weight Update.  It is more detailed that the official blog, trying to include every key statement of the pape">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Miles v0.1 deep dive - Fully Async RL">
+<meta property="og:url" content="https://gdymind.github.io/2026/09/27/Miles-deep-dive-fully-async-RL/index.html">
+<meta property="og:site_name" content="gdymind&#39;s Blog">
+<meta property="og:description" content="This blog is distilled from Miles v0.1 paper’s Section 1-4: Intro, Rollout, Training, and Weight Update.  It is more detailed that the official blog, trying to include every key statement of the pape">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%201.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%202.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%203.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%204.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%205.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%206.png">
+<meta property="og:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image%207.png">
+<meta property="article:published_time" content="2026-09-28T06:42:31.000Z">
+<meta property="article:modified_time" content="2026-09-28T06:43:28.261Z">
+<meta property="article:author" content="gdymind">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://gdymind.github.io/img/Miles%20v0%201%20deep%20dive/image.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Miles v0.1 deep dive - Fully Async RL - gdymind&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"gdymind.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>gdymind&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/sky.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Miles v0.1 deep dive - Fully Async RL"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-27 23:42" pubdate>
+          September 27, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          432 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          4 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Miles v0.1 deep dive - Fully Async RL</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li><p>This blog is distilled from Miles v0.1 paper’s Section 1-4: <strong>Intro, Rollout, Training, and Weight Update</strong>.</p>
+</li>
+<li><p>It is more detailed that the official blog, trying to include every key statement of the paper, while much shorter than the paper.</p>
+</li>
+<li><p>Paper link: <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2609.08368">https://arxiv.org/abs/2609.08368</a></p>
+</li>
+<li><p>Blog link: <a target="_blank" rel="noopener" href="https://www.lmsys.org/blog/2026-08-18-miles-v0-1/">https://www.lmsys.org/blog/2026-08-18-miles-v0-1/</a></p>
+</li>
+</ul>
+<h1 id="0-Intro"><a href="#0-Intro" class="headerlink" title="0. Intro"></a><strong>0. Intro</strong></h1><p><strong>Goal</strong>: verified, clean, and customizable</p>
+<p><strong>Key features</strong></p>
+<ul>
+<li>Rollout engine: SGLang</li>
+<li>Trainer: Megatron or Pytorch FSDP</li>
+<li>3 weight-sync methods</li>
+<li>Full-param RL, LoRA RL support</li>
+<li>OPD, SFT support</li>
+<li>True-on-policy rollout-training alignment</li>
+</ul>
+<p><strong>Changellges in RL</strong> → ****needs ****a verified, clean, and customizable RL framework</p>
+<ul>
+<li>multi-turn rollouts</li>
+<li>tool use; complicated external env</li>
+<li>O(T) param MoE models</li>
+</ul>
+<p><strong>Limitations of Miles</strong></p>
+<ul>
+<li>need better supports for some precision formats</li>
+<li>some weight-transfer paths only cover only certain models</li>
+<li>some benchmarks are for specific configs &#x2F; setup</li>
+</ul>
+<h1 id="1-The-Miles-RL-Loop"><a href="#1-The-Miles-RL-Loop" class="headerlink" title="1. The Miles RL Loop"></a><strong>1. The Miles RL Loop</strong></h1><p><img src="/img/Miles%20v0%201%20deep%20dive/image.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li><strong>Rollout</strong>: generate trajectories (seq of state and actions) and produces rewards</li>
+<li><strong>Training</strong>: consume trajactories groups, compute loss, and update the policy (model weights)</li>
+<li><strong>Weight update</strong>: sync new weights with the Rollout engine</li>
+</ul>
+<p><strong>Fully async mode</strong>: Rollout continues generates while Trainer is working</p>
+<h1 id="2-Rollout"><a href="#2-Rollout" class="headerlink" title="2. Rollout"></a>2. Rollout</h1><p>What matters during Rollout?</p>
+<ul>
+<li><strong>Throughput</strong></li>
+<li><strong>Fidelity</strong>: the trainer’s view of a trajectory can silently diverge from what the policy actually sampled</li>
+</ul>
+<p><strong>Key terms</strong></p>
+<ul>
+<li><strong>Prompt</strong>: one task drawn from the dataset</li>
+<li><strong>Trajectory</strong>:  one attempt at that task by the current policy (can include tool calls, and env replies)</li>
+<li><strong>Group</strong>: trajectories from the same prompt</li>
+<li><strong>Session</strong>: what the serving layer sees, namely the ordered set of requests belonging to a single episode<ul>
+<li>may produce one or more trajectories</li>
+<li>multiple env. each has a trajectory</li>
+</ul>
+</li>
+</ul>
+<h2 id="2-1-Multi-turn-request-routing"><a href="#2-1-Multi-turn-request-routing" class="headerlink" title="2.1 Multi-turn request routing"></a>2.1 Multi-turn request routing</h2><p><strong>Request routing</strong> larges determines the throughput.</p>
+<p>For multi-turn RL, route the request to the engine of the previous turns (to reuse KV cache)</p>
+<p><strong>Two-level affinity</strong></p>
+<ul>
+<li>route to the same engine</li>
+<li>and further route to the same DP rank (when DP attention is enabled)<ul>
+<li><strong>DP attention</strong>: gives each rank its own slice of the attention work and its own cache, instead of every rank holding a copy of the same thing. See<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm/issues/16037">https://github.com/vllm-project/vllm/issues/16037</a></li>
+<li><a target="_blank" rel="noopener" href="https://inferencex.semianalysis.com/glossary/dp-attention">https://inferencex.semianalysis.com/glossary/dp-attention</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Implementation</strong></p>
+<ul>
+<li><strong>key-based routing</strong>: attaches a stable routing key to every request in a session, and maps to the same engine &#x2F; DP rank</li>
+</ul>
+<p><strong>Load balancing</strong>: A new session goes to the engine with least number of active requests</p>
+<h2 id="2-2-Fully-async-RL"><a href="#2-2-Fully-async-RL" class="headerlink" title="2.2 Fully async RL"></a>2.2 Fully async RL</h2><ul>
+<li><strong>Fully async</strong>: rollout and training can progress concurrently<ul>
+<li>The trainer consumes whichever trajectories when it needs a batch</li>
+<li>Rollouts runs continiously</li>
+</ul>
+</li>
+<li>The rollout engine and the trainer are <strong>disaggregated</strong> on different GPUs<ul>
+<li>Miles refuses fully async mode when they are <strong>colocated</strong></li>
+</ul>
+</li>
+<li>Pros: don’t have to wait for long and tail trajectories</li>
+</ul>
+<h3 id="2-2-1-The-replacement-rule-keep-the-Rollout-busy"><a href="#2-2-1-The-replacement-rule-keep-the-Rollout-busy" class="headerlink" title="2.2.1 The replacement rule: keep the Rollout busy"></a><strong>2.2.1 The replacement rule:</strong> keep the Rollout busy</h3><ul>
+<li>We want to keep the Rollout Engines busy</li>
+<li><strong>Replacement rule</strong>: a background worker checks the current rollouts and decide when to fill new trajectories. This “when to fill” is the replacement rule.</li>
+<li>We can choose one of the two rules:<ul>
+<li><strong>Group granularity</strong>: waits until every trajectory in a group finishes before starting a replacement</li>
+<li><strong>Sample granularity</strong>: fill a new trajectory as soon as a current one finishes. This is the default.</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-2-2-Data-Buffer"><a href="#2-2-2-Data-Buffer" class="headerlink" title="2.2.2 Data Buffer"></a><strong>2.2.2 Data Buffer</strong></h3><ul>
+<li>Finished rollout groups are placed in the data buffer, and the trainer cosumes them</li>
+<li><strong>Role of Data buffer</strong>: decouple rollout engines from the trainer, absorbing diff in their rates</li>
+<li><strong>supported ops</strong> (only 3): put a trajectory group in, take a batch out, and report metrics<ul>
+<li>easy to customize (e.g., change the data selector when taking a batch out)</li>
+</ul>
+</li>
+<li>3 rules to drop a group:<ul>
+<li>The first two are the properties of groups, so they can be checked when arriving</li>
+<li>The 3rd (staleness) depends on how long a group waits, so it’s checked when it’s collected for the trainer</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%201.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>Data Buffer has a <strong>bounded</strong> <strong>capacity</strong> (a multiple of the training batch size). It blocks adding groups until it has free capacity.</li>
+</ul>
+<h3 id="2-2-3-Observability"><a href="#2-2-3-Observability" class="headerlink" title="2.2.3 Observability"></a>2.2.3 Observability</h3><ul>
+<li>In fully async RL, rollout and training can be at different rates.</li>
+<li>So we need to monitor them and avoid the rates drifting too much.</li>
+<li>Miles report Buffer metric on every training step:</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%202.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>Queue size is the quickest signal for identifying which stage limits progress → can be a singal for scaling rollout &#x2F; training</li>
+</ul>
+<h3 id="2-2-4-Async-Eval"><a href="#2-2-4-Async-Eval" class="headerlink" title="2.2.4 Async Eval"></a>2.2.4 Async Eval</h3><ul>
+<li>Eval can compete with trajectory generation</li>
+<li><strong>Sync RL</strong>: the rollout engine is idle when training is in progress → eval using the rollout engine is free</li>
+<li><strong>Async RL</strong>: eval displaces generation</li>
+<li><strong>Async eval modes</strong>:</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%203.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li><strong>Snapshot-based</strong> modes keep evaluation off the critical path after exporting the snapshot. But exporting a fresh snapshot imposes a pause → it’s a collective op on the trainer</li>
+<li>Reusing a periodically saved checkpoint can avoid such pause.</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%204.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="2-3-Async-Env"><a href="#2-3-Async-Env" class="headerlink" title="2.3 Async Env"></a>2.3 Async Env</h2><ul>
+<li>Agentic RL accommodates multiple isolated envs of different <strong>scopes</strong>.</li>
+<li>Each trajectory comes from an env</li>
+<li>For example, a coding-agent env has a sandbox to run cmds, edit files, and get test results</li>
+<li>Different scopes<ul>
+<li>Some envs only own the episode loop</li>
+<li>Other envs controls batching, rewards, and token recording</li>
+</ul>
+</li>
+<li>Miles organizes env integration as three nested plug-in layers:</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%205.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>An env reaches Miles through a plug-in point.</li>
+<li>An env can take over as much or as little of the rollout as it needs.</li>
+<li>Supported envs (experimental)<ul>
+<li><strong>Agent function</strong>: Harbor (terminal), NeMo Gym (a lib for some simple enviroments), and OpenEnv (Huggingface lib of envs)</li>
+<li><strong>Generate function</strong>: HUD, Strands Agents, and $\tau$-bench</li>
+<li><strong>Rollout function</strong>: Prime Intellect Verifiers. It brings its own taskset, groups the episodes, and computes per-rollout and group rewards before returning completed traces</li>
+</ul>
+</li>
+<li>The sandboxes run on any backend of your choosing. Miles (experimentally) supports AgentENV, Daytona, E2B, and Modal</li>
+<li>nixos is another popularEnv</li>
+<li><strong>CPU usage for containers</strong>: Env is often encapsuled in a container.  Let’s say we have 64 prompts, each with 8 trajectories (under GRPO), each is 4GB CPU mem for container, then total is 2TB → higher demand for memory</li>
+</ul>
+<h2 id="2-4-Token-In-Token-Out-TITO"><a href="#2-4-Token-In-Token-Out-TITO" class="headerlink" title="2.4 Token-In-Token-Out (TITO)"></a>2.4 Token-In-Token-Out (TITO)</h2><ul>
+<li>In multi-turn RL, the trainer may see modified token sequences that are not exactly the same as what the rollout engine produces.</li>
+<li>Reason<ul>
+<li>there can be multiple states of each turn: e.g., message parsing, tool execution, and chat-template rendering</li>
+<li>each stage may change tokenization, prune historical reasoning, or reserialize tool calls</li>
+</ul>
+</li>
+<li>The <a target="_blank" rel="noopener" href="https://miles.radixark.com/docs/user-guide/agentic-rollout">TITO</a> session server adresses this by letting the server, rather than the harness, control<br>tokenization, preserving the exact token IDs generated by the model.</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/THUDM/slime/issues/2285">https://github.com/THUDM/slime/issues/2285</a></li>
+</ul>
+<h2 id="2-5-Rollout-Routing-Replay-R3"><a href="#2-5-Rollout-Routing-Replay-R3" class="headerlink" title="2.5 Rollout Routing Replay (R3)"></a>2.5 Rollout Routing Replay (R3)</h2><ul>
+<li>In MoE layers, the rollout engine and the trainer may choose different experts due to numeric diff.</li>
+<li>R3 treats the expert choices as part of the rollout data</li>
+<li>Recorded assignments are cheap to replay but expensive to carry<ul>
+<li>Each routing tensor holds (tokens − 1) × layers × k 32-bit integers.</li>
+<li>For a 32K-token sequence over 60 layers at k &#x3D; 8, that tensor occupies roughly 60 MB per trajectory</li>
+<li>For long-context RL, this can be severe. Section 3.2 has mitigations.</li>
+</ul>
+</li>
+<li>Limitation: in async RL, many other factors contributes to train-rollout mismatch, so enabling R3 could have limited effects.</li>
+</ul>
+<h1 id="3-Training"><a href="#3-Training" class="headerlink" title="3. Training"></a>3. Training</h1><h2 id="3-1-Low-precision-training"><a href="#3-1-Low-precision-training" class="headerlink" title="3.1 Low-precision training"></a>3.1 Low-precision training</h2><ul>
+<li>Low-recision training can lead to training-rollout mismatch.</li>
+<li>Solution: training and rollouts must quantize the same weights in the same way</li>
+<li>Miles supports the following recipes, which are verified with low KL divergence between SGLang and Megatron-LM.</li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%206.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="3-2-Memory-Efficiency-Disk-Offload"><a href="#3-2-Memory-Efficiency-Disk-Offload" class="headerlink" title="3.2 Memory Efficiency &amp; Disk Offload"></a>3.2 Memory Efficiency &amp; Disk Offload</h2><p> Two offloading mechanisms that act at different time</p>
+<ul>
+<li>Offloading the paused actor entirely (when actor is idle)</li>
+<li>Streaming the optimizer state (during training)</li>
+<li>These two can work together</li>
+</ul>
+<h3 id="3-2-1-Offloading-the-Paused-Actor"><a href="#3-2-1-Offloading-the-Paused-Actor" class="headerlink" title="3.2.1 Offloading the Paused Actor"></a>3.2.1 Offloading the Paused Actor</h3><ul>
+<li>In a colocated run, the default is to offload the trainer’s weights, gradient buffers, and optimizer state during rollout</li>
+<li>Megatron backend transfers the actor’s state at the allocator level rather than tensor by tensor</li>
+<li>Offload to local DRAM if possible, otherwise to local disk</li>
+<li>In disagg run, offloading is off by default.</li>
+<li>PPO is a special case: it needs an actor and a critic, which are always colocated. Offloading is on by default.</li>
+</ul>
+<h3 id="3-2-2-Streaming-the-Optimizer-State"><a href="#3-2-2-Streaming-the-Optimizer-State" class="headerlink" title="3.2.2 Streaming the Optimizer State"></a>3.2.2 Streaming the Optimizer State</h3><ul>
+<li>Optimizer states dominates the HBM usage, including FP32 master weights, AdamW momentums an variances, and optional FP32 master gradients</li>
+<li>Streaming: split params into buckets, one file for each bucket’s optmizer states</li>
+<li>Streaming saves HBM but make the training slower. We could we FP16 states to speed up the transfer.</li>
+</ul>
+<p>Skip 3.3 (two training backends Megatron and FSDP)</p>
+<h2 id="3-4-The-Objective-and-Rollout–Training-Corrections"><a href="#3-4-The-Objective-and-Rollout–Training-Corrections" class="headerlink" title="3.4 The Objective and Rollout–Training Corrections"></a>3.4 The Objective and Rollout–Training Corrections</h2><p><strong>The Objective</strong></p>
+<ul>
+<li>Miles defines a training objective by<ul>
+<li>an advantage estimator</li>
+<li>a typed loss interface</li>
+</ul>
+</li>
+<li>Five advantage estimators:<ul>
+<li>GRPO and GSPO</li>
+<li>REINFORCE++ [26] in plain and baseline-relative forms</li>
+<li>PPOwith a learned value function</li>
+</ul>
+</li>
+<li>The typed loss interface<ul>
+<li>provides one protocol with policy, value, and supervised variants, plus a hook for a user-supplied one</li>
+</ul>
+</li>
+</ul>
+<p><strong>Rollout–Training Corrections</strong></p>
+<ul>
+<li>Training and rollout use differnet engines, so they have numeric differences.</li>
+<li>importance ratio $r &#x3D; \frac{\pi_\text{train}}{\pi_\text{rollout}}$</li>
+<li>Miles offers two corrections that act on the importance ratio differently<ul>
+<li><strong>Truncated importance sampling (TIS)</strong>: clamps the ratio to a configured interval. The default interval is [0, 2]</li>
+<li><strong>Clip-or-pop</strong>: sets the per-token weight to zero for any token whose ratio falls outside the same interval (can drop outlier tokens)</li>
+</ul>
+</li>
+</ul>
+<h1 id="4-Weight-update"><a href="#4-Weight-update" class="headerlink" title="4. Weight update"></a>4. Weight update</h1><ul>
+<li>When training and rollout occupy different GPUs, the weight transfer can become a major pipeline bottleneck, and at frontier scale it can dominate the step<ul>
+<li>a full NCCL broadcast of Kimi K2 1T-A32B takes almost a minute</li>
+</ul>
+</li>
+<li>How does a prepared bucket of weights reach the rollout engines? → Miles provides three weight transports: <strong>NCCL broadcast</strong>, <strong>P2P</strong>, and <strong>disk-delta</strong></li>
+</ul>
+<p><img src="/img/Miles%20v0%201%20deep%20dive/image%207.png" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>Broadcast is the default. P2P is useful only when the trainer fleet and the rollout fleet each span more than one node.</li>
+</ul>
+<h2 id="4-1-The-Shared-Bucketed-Pipeline"><a href="#4-1-The-Shared-Bucketed-Pipeline" class="headerlink" title="4.1 The Shared Bucketed Pipeline"></a>4.1 The Shared Bucketed Pipeline</h2><ul>
+<li>NCCL Broadcast and P2P use one preparation pipeline: the pipeline prepares each <em>bucket</em> once, then hands it to the selected transport.</li>
+<li>Megatron owns the <em><strong>preparation pipeline</strong></em> and both <em><strong>transports</strong></em>.</li>
+</ul>
+<p>Megatron preparation pipeline</p>
+<ul>
+<li><strong>AG weights</strong>: for each pipeline stage, Miles all-gathers Mrgatron’s TP shards</li>
+<li><strong>weight conversion</strong>: convert weights to Hugging Face names &amp; layout that SGlang expects</li>
+<li><strong>buffering</strong>: append the weights to a 512MB buffer</li>
+<li><strong>flush</strong>: Miles hands the whobucket to the selected transport (broadcast or P2P)</li>
+<li><strong>transfer</strong>: either one batch of async NCCL broadcast, or RDMA P2P to rollout-rank mem</li>
+<li><strong>expert pass</strong>: (optional) a second pass of expert router decisions</li>
+</ul>
+<h2 id="4-2-P2P-tansfer"><a href="#4-2-P2P-tansfer" class="headerlink" title="4.2 P2P tansfer"></a>4.2 P2P tansfer</h2><ul>
+<li>With P2P weight transfer, training ranks re-shard each weight bucket for the target SGLang layout and write only the required shards directly into rollout-rank memory over RDMA.</li>
+<li>P2P treats each weight update as direct writes from training ranks (sources) to rollout ranks (targets)</li>
+<li><strong>Transfer plan</strong>: assign each training rank to its destination rollout ranks</li>
+<li><strong>CPU-resident model replica</strong>: Miles builds SGLang model in CPU memory, so we can call it and transfer the weights to the expected sharding. This way, the sender doesn’t have to re-implement SGLang’s sharding rules</li>
+<li><strong>Single shared pinned buffer</strong>: Miles register the buffer for RDMA once, and every rollout engine can resue it.</li>
+</ul>
+<h2 id="4-3-Disk-Delta-Updates"><a href="#4-3-Disk-Delta-Updates" class="headerlink" title="4.3 Disk-Delta Updates"></a>4.3 Disk-Delta Updates</h2><ul>
+<li>Consecutive RL steps change only a small fraction of the model’s bytes, so sending just the changed bytes costs far less than sending all of them.</li>
+<li>With disk-delta updates, every rollout host starts from a shared base checkpoint</li>
+<li>At each update the trainer writes the changed bytes to a shared filesystem, together with a reference to the base they apply to, and each rollout host reads them and patches its own local copy of the checkpoint.</li>
+</ul>
+<h2 id="4-4-Pausing-Generation-and-Checking-the-Result"><a href="#4-4-Pausing-Generation-and-Checking-the-Result" class="headerlink" title="4.4 Pausing Generation, and Checking the Result"></a>4.4 Pausing Generation, and Checking the Result</h2><ul>
+<li>Rollout engines apply and verify the delta-weights while generation continues, then pause only to load the combined weights into SGLang.</li>
+<li>What happens to requests in flight when the weights change? 3 options:<ul>
+<li>abort a request outright</li>
+<li>leave it in place while applying the update around it (may apply TIS)</li>
+<li>or retract it so that it rolls back and resumes against the new weights. retraction is the default.</li>
+</ul>
+</li>
+<li>How does a run confirm that the engines received the trainer’s weights?<ul>
+<li>Miles ships an opt-in check that confirms the rollout engines hold the weights the trainer sent. The check runs once, at the start of training, and compares each engine’s weights against the trainer’s own.</li>
+<li>Miles first fills the engine’s tensors with random values and only then runs the first weight update, so any tensor the transport failed to write still holds that noise when the check reaches</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p><em>Skip the rest of sections</em></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Miles v0.1 deep dive - Fully Async RL</div>
+      <div>https://gdymind.github.io/2026/09/27/Miles-deep-dive-fully-async-RL/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>gdymind</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>September 27, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/01/NLL-CE-KL-pretrain-and-SFT-loss/" title="Loss in Pretraining / SFT">
+                        <span class="hidden-mobile">Loss in Pretraining / SFT</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script type="text/javascript">
+        var disqus_config = function() {
+          this.page.url = 'https://gdymind.github.io/2026/09/27/Miles-deep-dive-fully-async-RL/';
+          this.page.identifier = '/2026/09/27/Miles-deep-dive-fully-async-RL/';
+        };
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          var d = document, s = d.createElement('script');
+          s.src = '//' + 'gdymind' + '.disqus.com/embed.js';
+          s.setAttribute('data-timestamp', new Date());
+          (d.head || d.body).appendChild(s);
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        visited 
+        <span id="busuanzi_value_site_pv"></span>
+         times
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        unique visitors: 
+        <span id="busuanzi_value_site_uv"></span>
+        
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
